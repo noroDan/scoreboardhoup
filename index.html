@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marcador OTI · HOUP Fundación</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cyan:#02C1F4;--gris:#797979;--negro:#000;--linea:#D8D8D8;--fondo:#EDEDED;
+    --verde:#2FBF71;--amar:#E8B54A;--rojo:#E5533D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--fondo);color:var(--negro);
+    font-family:Calibri,"Segoe UI",system-ui,sans-serif;line-height:1.45;
+    padding:20px 14px 60px}
+  .wrap{max-width:1120px;margin:0 auto}
+
+  /* barra superior */
+  .bar{background:#000;color:#fff;border-radius:3px;padding:14px 18px;
+    display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .bar .brand{font-family:Montserrat,sans-serif;font-weight:800;font-size:13px;letter-spacing:.14em}
+  .bar .brand span{color:var(--cyan)}
+  .wksel{display:flex;align-items:center;gap:8px;font-family:Montserrat,sans-serif;
+    font-size:10px;letter-spacing:.16em;font-weight:700;color:#BDBDBD}
+  .wksel select{font-family:Montserrat,sans-serif;font-weight:700;font-size:12px;
+    background:#1C1C1C;color:#fff;border:1px solid #3A3A3A;border-radius:3px;padding:6px 8px}
+  .saved{font-family:Montserrat,sans-serif;font-size:9px;letter-spacing:.16em;
+    color:var(--cyan);opacity:0;transition:opacity .25s}
+  .saved.on{opacity:1}
+
+  .card{background:#fff;border:1px solid var(--linea);border-radius:3px;margin-top:14px;overflow:hidden}
+  .chead{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 18px;border-bottom:1px solid var(--linea);flex-wrap:wrap}
+  .ctag{font-family:Montserrat,sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.22em;color:var(--gris)}
+  .status{display:flex;align-items:center;gap:9px}
+  .lamp{width:15px;height:15px;border-radius:50%;background:#E8E8E8;transition:background .3s}
+  .lamp.on-v{background:var(--verde)}.lamp.on-a{background:var(--amar)}.lamp.on-r{background:var(--rojo)}
+  .stxt{font-family:Montserrat,sans-serif;font-weight:800;font-size:10px;letter-spacing:.14em}
+
+  .split{display:grid;grid-template-columns:33% 67%}
+  .pane{padding:22px 20px}
+  .pane.right{border-left:1px solid var(--linea)}
+  .kicker{font-family:Montserrat,sans-serif;font-weight:800;font-size:23px;margin-bottom:9px}
+  .stmt{font-family:Montserrat,sans-serif;font-size:16px;line-height:1.35}
+  .stmt strong{font-weight:800}
+  .hint{font-size:12px;color:var(--gris);margin-top:11px;line-height:1.45}
+
+  .big{font-family:Montserrat,sans-serif;font-weight:800;font-size:30px;
+    letter-spacing:-.02em;margin-top:16px;line-height:1}
+  .biglbl{font-size:11px;color:var(--gris);margin-top:4px;letter-spacing:.04em}
+
+  .capt{margin-top:16px;border-top:1px solid var(--linea);padding-top:14px}
+  .capt label{display:block;font-family:Montserrat,sans-serif;font-weight:700;
+    font-size:9px;letter-spacing:.16em;color:var(--gris);margin-bottom:6px}
+  input[type=text],input[type=number],textarea,select{
+    width:100%;font-family:Montserrat,sans-serif;font-size:13px;color:var(--negro);
+    border:1px solid var(--linea);border-radius:3px;padding:9px 10px;background:#fff}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--cyan)}
+  textarea{resize:vertical;min-height:44px;line-height:1.4}
+
+  svg{width:100%;height:auto;display:block}
+
+  .escala{margin-top:16px;border-top:1px solid var(--linea);padding-top:12px}
+  .escala div{font-family:Montserrat,sans-serif;font-size:11px;color:var(--gris);padding:2px 0}
+  .escala b{color:var(--cyan);font-weight:800;display:inline-block;width:14px}
+
+  .tblwrap{margin-top:18px;border-top:1px solid var(--linea);padding-top:14px}
+  .ttl{font-family:Montserrat,sans-serif;font-weight:800;font-size:9px;
+    letter-spacing:.2em;color:var(--gris);margin-bottom:10px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{border-collapse:separate;border-spacing:0;font-family:Montserrat,sans-serif;font-size:11px;width:100%}
+  th{font-weight:700;font-size:8.5px;color:var(--gris);background:#F5F5F5;
+    padding:6px 3px;border:1px solid var(--linea);text-align:center;white-space:nowrap}
+  td{border:1px solid var(--linea);padding:0;text-align:center}
+  th.nm,td.nm{text-align:left;min-width:118px;position:sticky;left:0;z-index:2;background:#fff}
+  th.nm{background:#F5F5F5}
+  th.cur{background:#DFF6FE;color:var(--cyan)}
+  td input.cell{border:none;border-radius:0;text-align:center;font-weight:800;
+    font-size:13px;padding:8px 0;width:46px;background:transparent}
+  td input.nmi{border:none;border-radius:0;text-align:left;font-weight:700;
+    font-size:11.5px;padding:8px 9px;background:transparent}
+  td.up input.cell{background:#E4F7EC;color:#1E7F4A}
+  td.new input.cell{background:#DFF6FE;color:#0286AC}
+  td.cur{box-shadow:inset 0 0 0 1px var(--cyan)}
+  tr.delta td{background:#F5F5F5;font-family:Montserrat,sans-serif;font-weight:800;
+    font-size:12px;padding:8px 3px;color:var(--negro)}
+  tr.delta td.nm{background:#F5F5F5}
+  tr.delta td.v{color:var(--verde)}tr.delta td.a{color:var(--amar)}tr.delta td.r{color:var(--rojo)}
+
+  .btn{font-family:Montserrat,sans-serif;font-weight:700;font-size:10px;letter-spacing:.14em;
+    border:1px solid var(--linea);background:#fff;color:var(--gris);
+    padding:8px 14px;border-radius:3px;cursor:pointer;margin-top:12px}
+  .btn:hover{border-color:var(--cyan);color:var(--cyan)}
+  .btn.x{padding:6px 9px;margin:0;font-size:11px;line-height:1}
+
+  .com{padding:20px}
+  .comrow{display:grid;grid-template-columns:110px 1fr 130px 1fr;gap:10px;
+    align-items:start;padding:12px 0;border-bottom:1px solid var(--linea)}
+  .comrow:last-child{border-bottom:none}
+  .who{font-family:Montserrat,sans-serif;font-weight:800;font-size:11.5px;letter-spacing:.06em;padding-top:10px}
+  .who span{display:block;font-size:8.5px;letter-spacing:.14em;color:var(--cyan);font-weight:600}
+  .comhd{display:grid;grid-template-columns:110px 1fr 130px 1fr;gap:10px;
+    font-family:Montserrat,sans-serif;font-weight:700;font-size:8.5px;
+    letter-spacing:.16em;color:var(--gris);padding-bottom:8px;border-bottom:1px solid var(--linea)}
+  .nota{font-size:11.5px;color:var(--gris);margin-top:14px;line-height:1.45}
+
+  .mant{display:flex;gap:26px;flex-wrap:wrap;padding:16px 20px;
+    border-top:1px solid var(--linea);font-size:11.5px;color:var(--gris);align-items:center}
+  .mant b{font-family:Montserrat,sans-serif;font-size:9px;letter-spacing:.16em;
+    color:var(--negro);display:block;margin-bottom:3px}
+  .mant input{max-width:220px}
+
+  .aparte{border:1px dashed var(--gris);background:#fff;border-radius:3px;
+    margin-top:20px;padding:20px}
+  .aparte td input{border:none;width:100%;font-size:11px;padding:8px 6px;text-align:center;font-family:Montserrat,sans-serif}
+  .aparte td input.l{text-align:left}
+  .chk{width:17px;height:17px;accent-color:var(--cyan)}
+
+  @media (max-width:820px){
+    body{padding:12px 8px 50px}
+    .split{grid-template-columns:1fr}
+    .pane.right{border-left:none;border-top:1px solid var(--linea)}
+    .kicker{font-size:20px}.stmt{font-size:14.5px}
+    .comhd{display:none}
+    .comrow{grid-template-columns:1fr;gap:7px;padding:14px 0}
+    .who{padding-top:0}
+    .mant{gap:14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="bar">
+    <div class="brand"><span>HO</span>UP FUNDACIÓN · MARCADOR OTI</div>
+    <div class="wksel">
+      <span>SEMANA</span>
+      <select id="wk"></select>
+      <span id="wkdate" style="color:#8A8A8A;letter-spacing:.06em"></span>
+      <span class="saved" id="saved">GUARDADO</span>
+    </div>
+  </div>
+
+  <!-- OTI -->
+  <div class="card">
+    <div class="chead">
+      <div class="ctag">OTI · EL RESULTADO</div>
+      <div class="status">
+        <span class="lamp" id="l-oti-v"></span><span class="lamp" id="l-oti-a"></span><span class="lamp" id="l-oti-r"></span>
+        <span class="stxt" id="oti-txt">SIN DATO</span>
+      </div>
+    </div>
+    <div class="split">
+      <div class="pane">
+        <div class="kicker">OTI</div>
+        <div class="stmt">Incrementar ingresos cobrados de proyectos de la Fundación de <strong>$1.1M a $2.9M</strong> para el 31 de diciembre.</div>
+        <div class="hint">La línea de meta sube $90,000 cada semana.</div>
+        <div class="big" id="oti-real">—</div>
+        <div class="biglbl" id="oti-vs">Cobrado acumulado</div>
+        <div class="capt">
+          <label>COBRADO ACUMULADO · SEMANA <span id="capwk">1</span></label>
+          <input type="number" id="cobrado" placeholder="1100000" step="1000">
+        </div>
+      </div>
+      <div class="pane right"><div id="otichart"></div></div>
+    </div>
+  </div>
+
+  <!-- PALANCA -->
+  <div class="card">
+    <div class="chead">
+      <div class="ctag">PALANCA · LO QUE CONTROLAMOS</div>
+      <div class="status">
+        <span class="lamp" id="l-pal-v"></span><span class="lamp" id="l-pal-a"></span><span class="lamp" id="l-pal-r"></span>
+        <span class="stxt" id="pal-txt">SIN DATO</span>
+      </div>
+    </div>
+    <div class="split">
+      <div class="pane">
+        <div class="kicker">Palanca</div>
+        <div class="stmt">Mover <strong>4 etapas</strong> por semana, a cualquier cliente.</div>
+        <div class="hint">Cuenta cuando HOUP entrega su parte del salto: llamada hecha, junta sostenida, propuesta entregada, seguimiento con fecha puesta, contrato entregado.</div>
+        <div class="big" id="pal-real">—</div>
+        <div class="biglbl">Etapas movidas esta semana · meta 4</div>
+        <div class="escala">
+          <div><b>1</b> Lead calificado</div>
+          <div><b>2</b> Junta agendada</div>
+          <div><b>3</b> Propuesta enviada</div>
+          <div><b>4</b> Seguimiento activo</div>
+          <div><b>5</b> Negociación final</div>
+          <div><b>6</b> Cerrado y cobrado</div>
+        </div>
+      </div>
+      <div class="pane right">
+        <div id="palchart"></div>
+        <div class="tblwrap">
+          <div class="ttl">DETALLE · EN QUÉ ETAPA ESTÁ CADA CLIENTE</div>
+          <div class="scroll"><table id="matriz"></table></div>
+          <button class="btn" id="addcli">+ AGREGAR CLIENTE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPROMISOS -->
+  <div class="card">
+    <div class="chead"><div class="ctag">COMPROMISOS DE ESTA SEMANA · JUNTA OTI DEL LUNES</div></div>
+    <div class="com">
+      <div class="comhd"><div>PERSONA</div><div>QUÉ VOY A HACER</div><div>PARA CUÁNDO</div><div>QUÉ ESPERO EN EL MARCADOR</div></div>
+      <div id="comrows"></div>
+      <div class="nota">Uno o dos por persona. Específico, personal, semanal, y dirigido a la palanca — no al trabajo urgente. Despejar el camino a un compañero cuenta como compromiso.</div>
+    </div>
+    <div class="mant">
+      <span><b>RESPONSABLE DEL MARCADOR</b><input type="text" id="resp" placeholder="Nombre"></span>
+      <span><b>SE PUBLICA</b>Lunes antes de la Junta OTI</span>
+      <span><b>SE ACTUALIZA</b>Semanal</span>
+      <span><b>JUNTA OTI</b>Lunes · 20–30 min</span>
+    </div>
+  </div>
+
+  <!-- CONVOCATORIAS -->
+  <div class="aparte">
+    <div class="ctag" style="margin-bottom:6px">CONVOCATORIAS · SEGUIMIENTO APARTE</div>
+    <div class="nota" style="margin:0 0 14px">Los home runs se suben este año y se ganan en 2027. <strong>No cuentan para este OTI</strong> y no se revisan en la Junta OTI del lunes.</div>
+    <div class="scroll"><table id="convo"></table></div>
+    <button class="btn" id="addconv">+ AGREGAR CONVOCATORIA</button>
+  </div>
+
+</div>
+
+<script>
+const W=21, META_PAL=4, OTI_INI=1100000, OTI_FIN=2900000, PASO=(OTI_FIN-OTI_INI)/(W-1);
+const START=new Date(2026,7,4);
+const MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const PERSONAS=[{k:'andrea',n:'ANDREA',r:'líder'},{k:'karina',n:'KARINA',r:''},
+                {k:'daniel',n:'DANIEL',r:''},{k:'despejar',n:'DESPEJAR EL CAMINO',r:''}];
+
+let D={clients:[],cobrado:{},commits:{},convo:[],week:1,resp:''};
+
+function wkDate(n){const d=new Date(START);d.getTime();d.setDate(d.getDate()+(n-1)*7);
+  return d.getDate()+' '+MESES[d.getMonth()];}
+function metaOti(n){return OTI_INI+(n-1)*PASO;}
+function money(v){return '$'+Math.round(v).toLocaleString('en-US');}
+
+/* ---------- persistencia (localStorage) ---------- */
+const KEY='houp:marcador:v1';
+let tSave;
+function save(){
+  clearTimeout(tSave);
+  tSave=setTimeout(()=>{
+    try{ localStorage.setItem(KEY,JSON.stringify(D));
+      const s=document.getElementById('saved'); s.classList.add('on');
+      setTimeout(()=>s.classList.remove('on'),1200);
+    }catch(e){console.warn('sin almacenamiento',e);}
+  },400);
+}
+function load(){
+  try{ const r=localStorage.getItem(KEY); if(r) D=Object.assign(D,JSON.parse(r)); }catch(e){}
+  if(!D.clients||!D.clients.length){
+    D.clients=[['Friza',2],['Zaber',1],['Gonher',4],['Alfa',1],['Mr. Lucky',1],['Aída Barragán',1]]
+      .map(([n,s])=>({name:n,st:{1:s}}));
+  }
+  if(!D.cobrado||!Object.keys(D.cobrado).length) D.cobrado={1:OTI_INI};
+  if(!D.convo||!D.convo.length) D.convo=[{},{},{}];
+  if(!D.commits) D.commits={};
+}
+
+/* ---------- cálculo ---------- */
+function delta(w){
+  if(w<2) return null;
+  let t=0, any=false;
+  D.clients.forEach(c=>{
+    const a=c.st[w], b=c.st[w-1];
+    if(a!=null&&a!==''){ any=true;
+      if(b!=null&&b!=='') t+=Math.max(0,Number(a)-Number(b));
+      else t+=Number(a);
+    }
+  });
+  return any?t:null;
+}
+function estado(real,meta){
+  if(real==null) return {c:'',t:'SIN DATO'};
+  const r=real/meta;
+  if(r>=1) return {c:'v',t:'VAMOS GANANDO'};
+  if(r>=0.9) return {c:'a',t:'EN RIESGO'};
+  return {c:'r',t:'VAMOS PERDIENDO'};
+}
+function pintar(pre,est){
+  ['v','a','r'].forEach(k=>{
+    const el=document.getElementById('l-'+pre+'-'+k);
+    el.className='lamp'+(est.c===k?' on-'+k:'');
+  });
+  const t=document.getElementById(pre+'-txt');
+  t.textContent=est.t;
+  t.style.color=est.c==='v'?'var(--verde)':est.c==='a'?'var(--amar)':est.c==='r'?'var(--rojo)':'var(--gris)';
+}
+
+/* ---------- gráficas ---------- */
+function chartOti(){
+  const x=n=>70+(n-1)*(540/(W-1)), y=v=>250-((v-OTI_INI)/(OTI_FIN-OTI_INI))*210;
+  let ticks='',labs='';
+  for(let i=1;i<=W;i++) ticks+=`<line x1="${x(i)}" y1="250" x2="${x(i)}" y2="256"/>`;
+  [1,4,7,10,13,16,19,21].forEach(i=>{labs+=`<text x="${x(i)}" y="270"${i===D.week?' fill="#02C1F4" font-weight="700"':''}>${i}</text>`;});
+  let pts=[];
+  for(let i=1;i<=W;i++){const v=D.cobrado[i];if(v!=null&&v!=='')pts.push([x(i),y(Number(v))]);}
+  const real=pts.length>1?`<polyline fill="none" stroke="#02C1F4" stroke-width="3" points="${pts.map(p=>p.join(',')).join(' ')}"/>`:'';
+  const dots=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#02C1F4"/>`).join('');
+  document.getElementById('otichart').innerHTML=`
+  <svg viewBox="0 0 640 292" role="img" aria-label="Cobrado acumulado contra meta">
+    <rect x="${x(D.week)-13}" y="30" width="26" height="220" fill="#E4F8FE"/>
+    <line x1="70" y1="250" x2="620" y2="250" stroke="#000" stroke-width="2"/>
+    <line x1="70" y1="30" x2="70" y2="250" stroke="#000" stroke-width="2"/>
+    <text x="62" y="255" font-family="Montserrat" font-size="15" font-weight="700" text-anchor="end">$1.1M</text>
+    <text x="618" y="34" font-family="Montserrat" font-size="15" font-weight="700" text-anchor="end">$2.9M</text>
+    <line x1="70" y1="250" x2="610" y2="40" stroke="#000" stroke-width="3"/>
+    ${real}${dots}
+    <g stroke="#C9C9C9" stroke-width="1">${ticks}</g>
+    <g font-family="Montserrat" font-size="10" fill="#797979" text-anchor="middle">${labs}</g>
+    <g font-family="Montserrat" font-size="9" fill="#797979" text-anchor="middle" letter-spacing="1.2">
+      <text x="117" y="288">AGO</text><text x="232" y="288">SEP</text><text x="353" y="288">OCT</text>
+      <text x="475" y="288">NOV</text><text x="583" y="288">DIC</text></g>
+  </svg>`;
+}
+function chartPal(){
+  const bx=n=>48+(n-1)*27, base=210, u=25, top=v=>base-v*u;
+  let bars='',labs='';
+  for(let i=1;i<=W;i++){
+    const d=delta(i);
+    bars+=`<rect x="${bx(i)+3}" y="${top(META_PAL)}" width="18" height="${base-top(META_PAL)}" fill="#F0F0F0"/>`;
+    if(d!=null){
+      const col=d>=META_PAL?'#2FBF71':d>=META_PAL-1?'#E8B54A':'#E5533D';
+      const h=Math.max(2,Math.min(d,6)*u);
+      bars+=`<rect x="${bx(i)+3}" y="${base-h}" width="18" height="${h}" fill="${col}"/>`;
+    }
+    labs+=`<text x="${bx(i)+12}" y="226"${i===D.week?' fill="#02C1F4" font-weight="700"':''}>${i}</text>`;
+  }
+  document.getElementById('palchart').innerHTML=`
+  <svg viewBox="0 0 640 244" role="img" aria-label="Etapas movidas por semana contra meta de cuatro">
+    <line x1="40" y1="210" x2="620" y2="210" stroke="#000" stroke-width="2"/>
+    <line x1="40" y1="35" x2="40" y2="210" stroke="#000" stroke-width="2"/>
+    <g font-family="Montserrat" font-size="10" fill="#797979" text-anchor="end">
+      <text x="34" y="214">0</text><text x="34" y="164">2</text>
+      <text x="34" y="114">4</text><text x="34" y="64">6</text></g>
+    ${bars}
+    <line x1="40" y1="${top(META_PAL)}" x2="616" y2="${top(META_PAL)}" stroke="#000" stroke-width="2.5"/>
+    <text x="598" y="${top(META_PAL)-7}" font-family="Montserrat" font-size="12" font-weight="700">META 4</text>
+    <g font-family="Montserrat" font-size="8.5" fill="#797979" text-anchor="middle">${labs}</g>
+    <text x="330" y="242" font-family="Montserrat" font-size="9" fill="#797979" text-anchor="middle" letter-spacing="1.4">S E M A N A</text>
+  </svg>`;
+}
+
+/* ---------- matriz ---------- */
+function matriz(){
+  let h='<thead><tr><th class="nm">CLIENTE</th>';
+  for(let i=1;i<=W;i++) h+=`<th class="${i===D.week?'cur':''}">S${i}</th>`;
+  h+='<th></th></tr></thead><tbody>';
+  D.clients.forEach((c,ci)=>{
+    h+=`<tr><td class="nm"><input class="nmi" data-ci="${ci}" data-f="name" value="${(c.name||'').replace(/"/g,'&quot;')}"></td>`;
+    for(let i=1;i<=W;i++){
+      const v=c.st[i]??'', p=c.st[i-1];
+      let cls=i===D.week?'cur ':'';
+      if(v!==''&&p!=null&&p!==''&&Number(v)>Number(p)) cls+='up';
+      else if(v!==''&&(p==null||p==='')) cls+='new';
+      h+=`<td class="${cls}"><input class="cell" type="number" min="1" max="6" data-ci="${ci}" data-w="${i}" value="${v}"></td>`;
+    }
+    h+=`<td><button class="btn x" data-del="${ci}">×</button></td></tr>`;
+  });
+  h+='<tr class="delta"><td class="nm">Δ SEMANAL</td>';
+  for(let i=1;i<=W;i++){
+    const d=delta(i);
+    const cl=d==null?'':d>=META_PAL?'v':d>=META_PAL-1?'a':'r';
+    h+=`<td class="${cl}">${d==null?'—':d}</td>`;
+  }
+  h+='<td></td></tr></tbody>';
+  document.getElementById('matriz').innerHTML=h;
+}
+
+/* ---------- compromisos ---------- */
+function comp(){
+  document.getElementById('comrows').innerHTML=PERSONAS.map(p=>{
+    const c=D.commits[p.k]||{};
+    return `<div class="comrow">
+      <div class="who">${p.n}${p.r?`<span>${p.r}</span>`:''}</div>
+      <textarea data-cm="${p.k}" data-f="que" placeholder="Qué voy a hacer">${c.que||''}</textarea>
+      <input type="text" data-cm="${p.k}" data-f="cuando" placeholder="Para cuándo" value="${(c.cuando||'').replace(/"/g,'&quot;')}">
+      <textarea data-cm="${p.k}" data-f="espero" placeholder="Qué espero en el marcador">${c.espero||''}</textarea>
+    </div>`;}).join('');
+}
+
+/* ---------- convocatorias ---------- */
+function convo(){
+  let h='<thead><tr><th class="nm">CONVOCATORIA</th><th>MONTO</th><th>FECHA LÍMITE</th><th>UBICADA</th><th>ARMADA</th><th>SUBIDA</th><th>RESULTADO</th><th></th></tr></thead><tbody>';
+  D.convo.forEach((v,i)=>{
+    h+=`<tr>
+      <td class="nm"><input class="l" data-cv="${i}" data-f="nombre" value="${(v.nombre||'').replace(/"/g,'&quot;')}"></td>
+      <td><input data-cv="${i}" data-f="monto" value="${(v.monto||'').replace(/"/g,'&quot;')}"></td>
+      <td><input data-cv="${i}" data-f="fecha" value="${(v.fecha||'').replace(/"/g,'&quot;')}"></td>
+      <td><input type="checkbox" class="chk" data-cv="${i}" data-f="ubicada" ${v.ubicada?'checked':''}></td>
+      <td><input type="checkbox" class="chk" data-cv="${i}" data-f="armada" ${v.armada?'checked':''}></td>
+      <td><input type="checkbox" class="chk" data-cv="${i}" data-f="subida" ${v.subida?'checked':''}></td>
+      <td><input data-cv="${i}" data-f="resultado" value="${(v.resultado||'').replace(/"/g,'&quot;')}"></td>
+      <td><button class="btn x" data-delc="${i}">×</button></td></tr>`;
+  });
+  document.getElementById('convo').innerHTML=h+'</tbody>';
+}
+
+/* ---------- render ---------- */
+function render(){
+  document.getElementById('capwk').textContent=D.week;
+  document.getElementById('wkdate').textContent=wkDate(D.week);
+  document.getElementById('wk').value=D.week;
+  document.getElementById('resp').value=D.resp||'';
+  const cb=D.cobrado[D.week];
+  document.getElementById('cobrado').value=cb??'';
+  const m=metaOti(D.week);
+  if(cb!=null&&cb!==''){
+    document.getElementById('oti-real').textContent=money(cb);
+    const dif=Number(cb)-m;
+    document.getElementById('oti-vs').textContent=
+      (dif>=0?'Arriba de la meta por ':'Debajo de la meta por ')+money(Math.abs(dif))+' · meta '+money(m);
+    pintar('oti',estado(Number(cb)-OTI_INI+1,m-OTI_INI+1));
+  }else{
+    document.getElementById('oti-real').textContent='—';
+    document.getElementById('oti-vs').textContent='Meta de esta semana: '+money(m);
+    pintar('oti',{c:'',t:'SIN DATO'});
+  }
+  const d=delta(D.week);
+  document.getElementById('pal-real').textContent=d==null?'—':d;
+  pintar('pal',estado(d,META_PAL));
+  chartOti(); chartPal(); matriz(); comp(); convo();
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='cobrado'){D.cobrado[D.week]=t.value===''?'':Number(t.value);
+    save();chartOti();
+    const m=metaOti(D.week),cb=D.cobrado[D.week];
+    if(cb!==''){document.getElementById('oti-real').textContent=money(cb);
+      const dif=Number(cb)-m;
+      document.getElementById('oti-vs').textContent=(dif>=0?'Arriba de la meta por ':'Debajo de la meta por ')+money(Math.abs(dif))+' · meta '+money(m);
+      pintar('oti',estado(Number(cb)-OTI_INI+1,m-OTI_INI+1));}
+    return;}
+  if(t.id==='resp'){D.resp=t.value;save();return;}
+  if(t.dataset.ci!=null){
+    const c=D.clients[t.dataset.ci];
+    if(t.dataset.f==='name'){c.name=t.value;save();return;}
+    let v=t.value===''?'':Math.max(1,Math.min(6,Number(t.value)));
+    c.st[t.dataset.w]=v; save();
+    const pos=t.selectionStart;
+    render(); 
+    const re=document.querySelector(`input.cell[data-ci="${t.dataset.ci}"][data-w="${t.dataset.w}"]`);
+    if(re){re.focus();try{re.setSelectionRange(pos,pos);}catch(_){}}
+    return;}
+  if(t.dataset.cm){const k=t.dataset.cm;D.commits[k]=D.commits[k]||{};D.commits[k][t.dataset.f]=t.value;save();return;}
+  if(t.dataset.cv!=null){const o=D.convo[t.dataset.cv];
+    o[t.dataset.f]=t.type==='checkbox'?t.checked:t.value;save();return;}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='wk'){D.week=Number(e.target.value);save();render();}
+  if(e.target.type==='checkbox'&&e.target.dataset.cv!=null){
+    D.convo[e.target.dataset.cv][e.target.dataset.f]=e.target.checked;save();}
+});
+document.addEventListener('click',e=>{
+  if(e.target.id==='addcli'){D.clients.push({name:'',st:{}});save();render();}
+  if(e.target.id==='addconv'){D.convo.push({});save();convo();}
+  if(e.target.dataset.del!=null){D.clients.splice(e.target.dataset.del,1);save();render();}
+  if(e.target.dataset.delc!=null){D.convo.splice(e.target.dataset.delc,1);save();convo();}
+});
+
+/* ---------- arranque ---------- */
+(function(){
+  const sel=document.getElementById('wk');
+  sel.innerHTML=Array.from({length:W},(_,i)=>`<option value="${i+1}">${i+1} de ${W}</option>`).join('');
+  load();
+  const hoy=new Date(), diff=Math.floor((hoy-START)/(7*86400000))+1;
+  if(!D.week) D.week=Math.max(1,Math.min(W,diff));
+  render();
+})();
+</script>
+</body>
+</html>
