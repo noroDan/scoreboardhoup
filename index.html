@@ -149,10 +149,10 @@
         <div class="capt">
           <label>QUÉ ESTOY CAPTURANDO</label>
           <select id="modo" style="margin-bottom:10px">
-            <option value="total">Acumulado total del año (incluye el $1.1M de ene–jun)</option>
-            <option value="periodo">Solo lo cobrado desde el 4 de agosto</option>
+            <option value="nuevo">Cobrado nuevo de la semana — se acumula solo</option>
+            <option value="total">Acumulado total del año</option>
           </select>
-          <label>MONTO · SEMANA <span id="capwk">1</span></label>
+          <label><span id="caplbl">COBRADO NUEVO</span> · SEMANA <span id="capwk">1</span></label>
           <input type="number" id="cobrado" placeholder="0" step="1000">
           <div id="aviso" style="font-size:11.5px;color:var(--rojo);margin-top:8px;display:none"></div>
         </div>
@@ -237,12 +237,15 @@ const SALTOS=['— ¿a qué salto le pega? —','Generar nuevos leads','Lead →
   'Propuesta → Seguimiento','Seguimiento → Negociación','Negociación → Cierre y cobro'];
 const BANDAS=[['AGO',1,4],['SEP',5,9],['OCT',10,13],['NOV',14,18],['DIC',19,21]];
 
-let D={clients:[],cobrado:{},commits:{},convo:[],week:1,resp:'',modo:'total'};
+let D={clients:[],cobrado:{},commits:{},convo:[],week:1,resp:'',modo:'nuevo'};
 
 function wkDate(n){const d=new Date(START);d.setDate(d.getDate()+(n-1)*7);return d.getDate()+' '+MESES[d.getMonth()];}
 function metaOti(n){return OTI_INI+(n-1)*PASO;}
-function valOti(w){const v=D.cobrado[w];if(v==null||v==='')return null;
-  return D.modo==='periodo'?OTI_INI+Number(v):Number(v);}
+function valOti(w){
+  if(D.modo==='nuevo'){let t=OTI_INI;
+    for(let i=1;i<=w;i++){const v=D.cobrado[i];if(v!=null&&v!=='')t+=Number(v);}
+    return w<=D.week?t:null;}
+  const v=D.cobrado[w];return (v==null||v==='')?null:Number(v);}
 function money(v){return '$'+Math.round(v).toLocaleString('en-US');}
 function mm(v){return '$'+(v/1000000).toFixed(2).replace(/0$/,'')+'M';}
 
@@ -257,10 +260,11 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r)D=Object.assign(D,JSON.parse(r));}catch(e){}
   if(!D.clients||!D.clients.length)
     D.clients=[['Friza',2],['Zaber',1],['Gonher',4],['Alfa',1],['Mr. Lucky',1],['Aída Barragán',1]].map(([n,s])=>({name:n,st:{1:s}}));
-  if(!D.cobrado||!Object.keys(D.cobrado).length)D.cobrado={1:OTI_INI};
+  if(!D.cobrado)D.cobrado={};
   if(!D.convo||!D.convo.length)D.convo=[{},{},{}];
   if(!D.commits)D.commits={};
-  if(!D.modo)D.modo='total';
+  if(!D.modo)D.modo='nuevo';
+  if(D.modo==='nuevo'&&Number(D.cobrado[1])===OTI_INI)D.cobrado[1]=0;
 }
 
 /* ---------- cálculo ---------- */
@@ -425,7 +429,7 @@ function otiPane(){
       av.textContent='El acumulado quedó por debajo del punto de partida de $1.1M. Si estás capturando solo lo cobrado desde agosto, cambia el selector de arriba.';}
     document.getElementById('oti-real').textContent=money(cb);
     const dif=cb-m;
-    document.getElementById('oti-vs').textContent=(dif>=0?'Arriba de la meta por ':'Debajo de la meta por ')+money(Math.abs(dif))+' · meta '+money(m);
+    document.getElementById('oti-vs').textContent='Acumulado · '+(dif>=0?'arriba de la meta por ':'debajo de la meta por ')+money(Math.abs(dif))+' · meta '+money(m);
     pintar('oti',estado(cb-OTI_INI+1,m-OTI_INI+1,'VAMOS GANANDO','VAMOS PERDIENDO'));
   }else{
     document.getElementById('oti-real').textContent='—';
@@ -439,6 +443,7 @@ function render(){
   document.getElementById('resp').value=D.resp||'';
   document.getElementById('cobrado').value=D.cobrado[D.week]??'';
   document.getElementById('modo').value=D.modo;
+  document.getElementById('caplbl').textContent=D.modo==='nuevo'?'COBRADO NUEVO':'ACUMULADO TOTAL';
   otiPane();
   const d=delta(D.week), p=promedio();
   document.getElementById('pal-sem').textContent=d==null?'—':d;
@@ -469,7 +474,7 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.id==='wk'){D.week=Number(t.value);save();render();return;}
-  if(t.id==='modo'){D.modo=t.value;save();chartOti();otiPane();return;}
+  if(t.id==='modo'){D.modo=t.value;save();render();return;}
   if(t.dataset.cm&&t.dataset.f==='salto'){const a=getArr(t.dataset.cm);const ix=Number(t.dataset.ix);
     a[ix]=a[ix]||{};a[ix].salto=Number(t.value);save();return;}
   if(t.type==='checkbox'&&t.dataset.cv!=null){D.convo[t.dataset.cv][t.dataset.f]=t.checked;save();}
