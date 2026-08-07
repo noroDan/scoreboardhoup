@@ -98,7 +98,8 @@
   .per:last-child{border-bottom:none}
   .who{font-family:Montserrat,sans-serif;font-weight:800;font-size:12px;letter-spacing:.08em;margin-bottom:10px}
   .who span{font-size:8.5px;letter-spacing:.14em;color:var(--cyan);font-weight:600;margin-left:8px}
-  .cline{display:grid;grid-template-columns:1fr 150px 220px 34px;gap:9px;align-items:start;margin-bottom:8px}
+  .cline{display:grid;grid-template-columns:1fr 130px 200px 92px 30px;gap:9px;align-items:start;margin-bottom:8px}
+  .cump{display:flex;align-items:center;gap:6px;font-family:Montserrat,sans-serif;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--gris);padding-top:10px;white-space:nowrap}
   .nota{font-size:11.5px;color:var(--gris);margin-top:14px;line-height:1.45}
 
   .mant{display:flex;gap:26px;flex-wrap:wrap;padding:16px 20px;border-top:1px solid var(--linea);
@@ -117,6 +118,7 @@
     .pane.right{border-left:none;border-top:1px solid var(--linea)}
     .kicker{font-size:20px}.stmt{font-size:14.5px}
     .cline{grid-template-columns:1fr;gap:7px}
+    .cump{padding-top:0}
     .mant{gap:14px}
   }
 </style>
@@ -206,7 +208,11 @@
 
   <!-- COMPROMISOS -->
   <div class="card">
-    <div class="chead"><div class="ctag">COMPROMISOS · JUNTA OTI DEL LUNES · SEMANA <span id="comwk"></span></div></div>
+    <div class="chead"><div class="ctag">COMPROMISOS · JUNTA OTI DEL LUNES · SEMANA <span id="comwk"></span></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="vista" style="margin:0">VER HISTORIAL</button>
+        <button class="btn" id="expo" style="margin:0">EXPORTAR</button>
+      </div></div>
     <div class="com">
       <div id="comrows"></div>
       <div class="nota">Uno o dos por persona. Específico, personal, semanal, y dirigido a la palanca. Cada compromiso registra a qué salto del proceso le está pegando — eso construye el historial de dónde cuesta más mover.</div>
@@ -239,6 +245,7 @@ const SALTOS=['— ¿a qué salto le pega? —','Generar nuevos leads','Lead →
 const BANDAS=[['AGO',1,4],['SEP',5,9],['OCT',10,13],['NOV',14,18],['DIC',19,21]];
 
 let D={clients:[],cobrado:{},commits:{},convo:[],week:1,resp:'',modo:'nuevo'};
+let VISTA='semana';
 
 function wkDate(n){const d=new Date(START);d.setDate(d.getDate()+(n-1)*7);return d.getDate()+' '+MESES[d.getMonth()];}
 function metaOti(n){return OTI_INI+(n-1)*PASO;}
@@ -478,10 +485,14 @@ function matriz(){
 
 /* ---------- compromisos ---------- */
 function comp(){
-  const wk=String(D.week);
-  const cw=D.commits[wk]||{};
   document.getElementById('comwk').textContent=D.week;
-  document.getElementById('comrows').innerHTML=PERSONAS.map(p=>{
+  const bt=document.getElementById('vista');
+  if(bt)bt.textContent=VISTA==='semana'?'VER HISTORIAL':'VER ESTA SEMANA';
+  document.getElementById('comrows').innerHTML=VISTA==='semana'?vistaSemana():vistaHistorial();
+}
+function vistaSemana(){
+  const cw=D.commits[String(D.week)]||{};
+  return PERSONAS.map(p=>{
     const arr=cw[p.k]&&cw[p.k].length?cw[p.k]:[{}];
     const lines=arr.map((c,ix)=>`<div class="cline">
       <textarea data-cm="${p.k}" data-ix="${ix}" data-f="que" placeholder="Qué me comprometo a hacer">${c.que||''}</textarea>
@@ -489,9 +500,39 @@ function comp(){
       <select data-cm="${p.k}" data-ix="${ix}" data-f="salto">
         ${SALTOS.map((s,si)=>`<option value="${si}"${Number(c.salto||0)===si?' selected':''}>${s}</option>`).join('')}
       </select>
+      <label class="cump"><input type="checkbox" class="chk" data-cm="${p.k}" data-ix="${ix}" data-f="cumplido" ${c.cumplido?'checked':''}> cumplido</label>
       <button class="btn x" data-delcm="${p.k}" data-ix="${ix}">×</button></div>`).join('');
     return `<div class="per"><div class="who">${p.n}${p.r?`<span>${p.r}</span>`:''}</div>${lines}
       <button class="btn add" data-addcm="${p.k}">+ OTRO COMPROMISO</button></div>`;}).join('');
+}
+function vistaHistorial(){
+  const stats={},sem=[];
+  for(let w=W;w>=1;w--){
+    const cw=D.commits[String(w)];if(!cw)continue;
+    let filas='',hay=false;
+    PERSONAS.forEach(p=>{(cw[p.k]||[]).forEach(c=>{
+      if(!c.que&&!c.cuando)return;hay=true;
+      const sn=SALTOS[Number(c.salto||0)];
+      if(c.salto){stats[sn]=stats[sn]||{t:0,c:0};stats[sn].t++;if(c.cumplido)stats[sn].c++;}
+      filas+=`<tr><td class="nm" style="text-align:left;padding:8px 9px;font-weight:700">${p.n}</td>
+        <td style="text-align:left;padding:8px 9px">${(c.que||'').replace(/</g,'&lt;')||'—'}</td>
+        <td style="padding:8px 9px">${(c.cuando||'').replace(/</g,'&lt;')||'—'}</td>
+        <td style="text-align:left;padding:8px 9px;color:#02C1F4">${c.salto?sn:'—'}</td>
+        <td style="padding:8px 9px;font-weight:800;color:${c.cumplido?'#2FBF71':'#E5533D'}">${c.cumplido?'SÍ':'NO'}</td></tr>`;});});
+    if(hay)sem.push(`<div class="per"><div class="who">SEMANA ${w} <span>${wkDate(w)}</span></div>
+      <div class="scroll"><table><thead><tr><th class="nm">PERSONA</th><th style="text-align:left">COMPROMISO</th><th>CUÁNDO</th><th style="text-align:left">SALTO</th><th>¿CUMPLIÓ?</th></tr></thead><tbody>${filas}</tbody></table></div></div>`);
+  }
+  let res='';
+  const ks=Object.keys(stats);
+  if(ks.length){
+    res=`<div class="per"><div class="who">DÓNDE ESTAMOS EMPUJANDO</div>
+      <div class="scroll"><table><thead><tr><th class="nm" style="text-align:left">SALTO DEL PROCESO</th><th>COMPROMISOS</th><th>CUMPLIDOS</th><th>%</th></tr></thead><tbody>
+      ${ks.sort((x,y)=>stats[y].t-stats[x].t).map(k=>{const v=stats[k],pc=Math.round(v.c/v.t*100);
+        return `<tr><td class="nm" style="text-align:left;padding:8px 9px;font-weight:700">${k}</td>
+        <td style="padding:8px 9px;font-weight:800">${v.t}</td><td style="padding:8px 9px">${v.c}</td>
+        <td style="padding:8px 9px;font-weight:800;color:${pc>=80?'#2FBF71':pc>=50?'#E8B54A':'#E5533D'}">${pc}%</td></tr>`;}).join('')}
+      </tbody></table></div></div>`;}
+  return sem.length?res+sem.join(''):'<div class="nota" style="margin:0">Todavía no hay compromisos registrados.</div>';
 }
 function getArr(k){const wk=String(D.week);D.commits[wk]=D.commits[wk]||{};
   D.commits[wk][k]=D.commits[wk][k]||[{}];return D.commits[wk][k];}
@@ -568,7 +609,9 @@ document.addEventListener('change',e=>{
   if(t.id==='modo'){D.modo=t.value;save();render();return;}
   if(t.dataset.cm&&t.dataset.f==='salto'){const a=getArr(t.dataset.cm);const ix=Number(t.dataset.ix);
     a[ix]=a[ix]||{};a[ix].salto=Number(t.value);save();return;}
-  if(t.type==='checkbox'&&t.dataset.cv!=null){D.convo[t.dataset.cv][t.dataset.f]=t.checked;save();}
+  if(t.type==='checkbox'&&t.dataset.cv!=null){D.convo[t.dataset.cv][t.dataset.f]=t.checked;save();return;}
+  if(t.type==='checkbox'&&t.dataset.cm){const ar=getArr(t.dataset.cm),ix=Number(t.dataset.ix);
+    ar[ix]=ar[ix]||{};ar[ix].cumplido=t.checked;save();}
 });
 document.addEventListener('click',e=>{
   const t=e.target;
@@ -576,6 +619,11 @@ document.addEventListener('click',e=>{
   if(t.id==='addconv'){D.convo.push({});save();convo();}
   if(t.dataset.del!=null){D.clients.splice(t.dataset.del,1);save();render();}
   if(t.dataset.delc!=null){D.convo.splice(t.dataset.delc,1);save();convo();}
+  if(t.id==='vista'){VISTA=VISTA==='semana'?'historial':'semana';comp();return;}
+  if(t.id==='expo'){const bl=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+    const u=URL.createObjectURL(bl),l=document.createElement('a');
+    l.href=u;l.download='marcador-houp-'+new Date().toISOString().slice(0,10)+'.json';l.click();
+    URL.revokeObjectURL(u);return;}
   if(t.dataset.addcm){getArr(t.dataset.addcm).push({});save();comp();}
   if(t.dataset.delcm){const a=getArr(t.dataset.delcm);a.splice(Number(t.dataset.ix),1);
     if(!a.length)a.push({});save();comp();}
