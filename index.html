@@ -82,6 +82,9 @@
   th.nm,td.nm{text-align:left;min-width:118px;position:sticky;left:0;z-index:2;background:#fff}
   th.nm{background:#F5F5F5}
   th.cur{background:#DFF6FE;color:var(--cyan)}
+  th.ini,td.ini{background:#F9F9F9;border-right:2px solid var(--negro)}
+  th.ini{background:#EDEDED;letter-spacing:.1em}
+  tr.delta td.ini{background:#EDEDED;color:var(--gris)}
   th.pr,td.pr{background:#EFEFEF;border-left:2px solid var(--negro);
     position:sticky;right:0;z-index:3;box-shadow:-2px 0 4px rgba(0,0,0,.07)}
   th.pr{background:#E4E4E4}
@@ -353,6 +356,7 @@ function defaults(){
   if(!D.cobrado)D.cobrado={};
   if(!D.convo||!D.convo.length)D.convo=[{},{},{}];
   if(!D.commits)D.commits={};
+  D.clients.forEach(c=>{if(c.st[0]==null||c.st[0]==='')c.st[0]=0;});
   if(!D.modo)D.modo='nuevo';
   if(D.semanas&&D.semanas>21)W=D.semanas; else D.semanas=W;
   if(D.modo==='nuevo'&&Number(D.cobrado[1])===OTI_INI)D.cobrado[1]=0;
@@ -393,16 +397,19 @@ function sincronizar(){
 }
 
 /* ---------- cálculo ---------- */
+function etapaPrev(c,w){
+  for(let i=w-1;i>=0;i--){const v=c.st[i];if(v!=null&&v!=='')return Number(v);}
+  return 0;
+}
 function delta(w){
-  if(w<2)return null;
   let t=0,any=false;
-  D.clients.forEach(c=>{const a=c.st[w],b=c.st[w-1];
-    if(a!=null&&a!==''){any=true;t+=(b!=null&&b!=='')?Math.max(0,Number(a)-Number(b)):Number(a);}});
+  D.clients.forEach(c=>{const a=c.st[w];
+    if(a!=null&&a!==''){any=true;t+=Math.max(0,Number(a)-etapaPrev(c,w));}});
   return any?t:null;
 }
 function promedio(){
   let s=0,n=0;
-  for(let i=2;i<=W;i++){const d=delta(i);if(d!=null){s+=d;n++;}}
+  for(let i=1;i<=W;i++){const d=delta(i);if(d!=null){s+=d;n++;}}
   return n?{v:s/n,n:n}:null;
 }
 function estado(real,meta,gan,perd){
@@ -507,7 +514,7 @@ function chartPal(){
       <text x="36" y="209">0</text><text x="36" y="159">2</text><text x="36" y="109">4</text><text x="36" y="59">6</text></g>
     ${seps}${bars}
     <line x1="42" y1="${205-META*u}" x2="574" y2="${205-META*u}" stroke="#000" stroke-width="2.5"/>
-    <text x="576" y="${205-META*u-6}" font-family="Montserrat" font-size="11" font-weight="700">META 3</text>
+    <text x="570" y="${205-META*u-10}" font-family="Montserrat" font-size="11" font-weight="700" text-anchor="end">META ${META}</text>
     <line x1="580" y1="30" x2="580" y2="212" stroke="#000" stroke-width="1.5"/>
     ${pbar}
     <text x="599" y="221" font-family="Montserrat" font-size="8.5" font-weight="800" fill="#000" text-anchor="middle">PROM</text>
@@ -518,21 +525,21 @@ function chartPal(){
 
 /* ---------- matriz ---------- */
 function matriz(){
-  let h='<thead><tr><th class="nm">CLIENTE</th>';
+  let h='<thead><tr><th class="nm">CLIENTE</th><th class="ini">INICIO</th>';
   for(let i=1;i<=W;i++)h+=`<th class="${i===D.week?'cur':''}">S${i}</th>`;
   h+='<th class="pr">PROM</th></tr></thead><tbody>';
   D.clients.forEach((c,ci)=>{
     h+=`<tr><td class="nm"><div style="display:flex;align-items:center">
       ${EDITAR?`<button class="btn x" data-del="${ci}" title="Borrar cliente" style="margin:0 0 0 6px;border:none;color:#E5533D">×</button>`:''}
-      <input class="nmi" data-ci="${ci}" data-f="name" value="${(c.name||'').replace(/"/g,'&quot;')}"></div></td>`;
+      <input class="nmi" data-ci="${ci}" data-f="name" value="${(c.name||'').replace(/"/g,'&quot;')}"></div></td>
+      <td class="ini"><input class="cell" type="number" min="0" max="6" data-ci="${ci}" data-w="0" value="${c.st[0]??0}"></td>`;
     for(let i=1;i<=W;i++){
-      const v=c.st[i]??'',p=c.st[i-1];
+      const v=c.st[i]??'',p=etapaPrev(c,i);
       let cls=i===D.week?'cur ':'';
-      if(v!==''&&p!=null&&p!=='' &&Number(v)>Number(p))cls+='up';
-      else if(v!==''&&(p==null||p===''))cls+='new';
+      if(v!==''&&Number(v)>p)cls+='up';
       h+=`<td class="${cls}"><input class="cell" type="number" min="1" max="6" data-ci="${ci}" data-w="${i}" value="${v}"></td>`;}
     h+=`<td class="pr"></td></tr>`;});
-  h+='<tr class="delta"><td class="nm">Δ SEMANAL</td>';
+  h+='<tr class="delta"><td class="nm">Δ SEMANAL</td><td class="ini">—</td>';
   for(let i=1;i<=W;i++){const d=delta(i);
     const cl=d==null?'':d>=META?'v':d>=META-1?'a':'r';
     h+=`<td class="${cl}">${d==null?'—':d}</td>`;}
@@ -664,7 +671,7 @@ document.addEventListener('input',e=>{
   if(t.dataset.ci!=null){
     const c=D.clients[t.dataset.ci];
     if(t.dataset.f==='name'){c.name=t.value;save();return;}
-    c.st[t.dataset.w]=t.value===''?'':Math.max(1,Math.min(6,Number(t.value)));save();
+    c.st[t.dataset.w]=t.value===''?'':Math.max(0,Math.min(6,Number(t.value)));save();
     const ci=t.dataset.ci,w=t.dataset.w,pos=t.selectionStart;
     render();
     const re=document.querySelector(`input.cell[data-ci="${ci}"][data-w="${w}"]`);
