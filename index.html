@@ -303,25 +303,47 @@ function chartOti(){
   let grid='',ylab='';
   marcas.forEach(v=>{grid+=`<line x1="72" y1="${y(v)}" x2="618" y2="${y(v)}" stroke="#EDEDED" stroke-width="1"/>`;
     ylab+=`<text x="66" y="${y(v)+4}">${mm(v)}</text>`;});
-  let ticks='',labs='',bandas='';
-  for(let i=1;i<=W;i++)ticks+=`<line x1="${x(i)}" y1="250" x2="${x(i)}" y2="255"/>`;
-  [1,4,7,10,13,16,19,21].forEach(i=>{labs+=`<text x="${x(i)}" y="268"${i===D.week?' fill="#02C1F4" font-weight="700"':''}>${i}</text>`;});
-  BANDAS.forEach(([m,a,b])=>{bandas+=`<text x="${(x(a)+x(b))/2}" y="286">${m}</text>`;});
-  let pts=[];
-  for(let i=1;i<=W;i++){const v=valOti(i);if(v!=null)pts.push([x(i),y(v)]);}
-  const real=pts.length>1?`<polyline fill="none" stroke="#02C1F4" stroke-width="3.5" points="${pts.map(p=>p.join(',')).join(' ')}"/>`:'';
+
+  // separadores de mes + bandas
+  let seps='',bandas='';
+  BANDAS.forEach(([m,a,b],i)=>{
+    if(i>0){const xs=x(a)-((538/(W-1))/2);
+      seps+=`<line x1="${xs}" y1="32" x2="${xs}" y2="262" stroke="#DCDCDC" stroke-width="1"/>`;}
+    bandas+=`<text x="${(x(a)+x(b))/2}" y="284">${m}</text>`;});
+
+  // marcas y numero de TODAS las semanas
+  let ticks='',labs='';
+  for(let i=1;i<=W;i++){
+    ticks+=`<line x1="${x(i)}" y1="250" x2="${x(i)}" y2="256"/>`;
+    labs+=`<text x="${x(i)}" y="268"${i===D.week?' fill="#02C1F4" font-weight="800"':''}>${i}</text>`;}
+
+  // puntos
+  let pts=[],ult=null;
+  for(let i=1;i<=W;i++){const v=valOti(i);
+    if(v!=null){pts.push([x(i),y(v),i,v]);ult=[x(i),y(v),i,v];}}
+  const real=pts.length>1?`<polyline fill="none" stroke="#02C1F4" stroke-width="3.5" stroke-linejoin="round" points="${pts.map(p=>p[0]+','+p[1]).join(' ')}"/>`:'';
   const dots=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#02C1F4"/>`).join('');
+
+  // guias del ultimo punto: baja a la semana y cruza al monto
+  let guia='';
+  if(ult){
+    guia=`<line x1="${ult[0]}" y1="${ult[1]}" x2="${ult[0]}" y2="250" stroke="#02C1F4" stroke-width="1.2" stroke-dasharray="3,3"/>
+    <line x1="72" y1="${ult[1]}" x2="${ult[0]}" y2="${ult[1]}" stroke="#02C1F4" stroke-width="1.2" stroke-dasharray="3,3"/>
+    <circle cx="${ult[0]}" cy="${ult[1]}" r="6" fill="#fff" stroke="#02C1F4" stroke-width="3"/>
+    <rect x="${Math.min(ult[0]-30,556)}" y="${Math.max(ult[1]-30,6)}" width="60" height="19" rx="2" fill="#02C1F4"/>
+    <text x="${Math.min(ult[0],586)}" y="${Math.max(ult[1]-16,20)}" font-family="Montserrat" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">S${ult[2]} · ${wkDate(ult[2])}</text>`;}
+
   document.getElementById('otichart').innerHTML=`
-  <svg viewBox="0 0 640 292" role="img" aria-label="Cobrado acumulado contra linea de meta">
-    <rect x="${x(D.week)-13}" y="30" width="26" height="220" fill="#E4F8FE"/>
-    ${grid}
+  <svg viewBox="0 0 640 292" role="img" aria-label="Cobrado acumulado contra linea de meta, semana a semana">
+    <rect x="${x(D.week)-13}" y="32" width="26" height="218" fill="#E4F8FE"/>
+    ${grid}${seps}
     <line x1="72" y1="250" x2="618" y2="250" stroke="#000" stroke-width="2"/>
-    <line x1="72" y1="30" x2="72" y2="250" stroke="#000" stroke-width="2"/>
+    <line x1="72" y1="32" x2="72" y2="250" stroke="#000" stroke-width="2"/>
     <line x1="72" y1="250" x2="610" y2="38" stroke="#000" stroke-width="2.5" stroke-dasharray="8,5"/>
-    ${real}${dots}
+    ${real}${dots}${guia}
     <g stroke="#C9C9C9" stroke-width="1">${ticks}</g>
     <g font-family="Montserrat" font-size="9.5" font-weight="700" fill="#797979" text-anchor="end">${ylab}</g>
-    <g font-family="Montserrat" font-size="10" fill="#797979" text-anchor="middle">${labs}</g>
+    <g font-family="Montserrat" font-size="8" fill="#797979" text-anchor="middle">${labs}</g>
     <g font-family="Montserrat" font-size="9" fill="#797979" text-anchor="middle" letter-spacing="1.2">${bandas}</g>
   </svg>`;
 }
@@ -338,7 +360,10 @@ function chartPal(){
       bars+=`<rect x="${bx(i)}" y="${base-h}" width="${ancho}" height="${h}" fill="${col}"/>`;}
     labs+=`<text x="${bx(i)+ancho/2}" y="221"${i===D.week?' fill="#02C1F4" font-weight="700"':''}>${i}</text>`;
   }
-  BANDAS.forEach(([m,a,b])=>{bandas+=`<text x="${(bx(a)+bx(b)+ancho)/2}" y="238">${m}</text>`;});
+  let seps='';
+  BANDAS.forEach(([m,a,b],i)=>{
+    if(i>0)seps+=`<line x1="${bx(a)-4}" y1="30" x2="${bx(a)-4}" y2="212" stroke="#DCDCDC" stroke-width="1"/>`;
+    bandas+=`<text x="${(bx(a)+bx(b)+ancho)/2}" y="238">${m}</text>`;});
   const p=promedio(); let pbar='';
   if(p){const col=p.v>=META?'#2FBF71':p.v>=META-1?'#E8B54A':'#E5533D';
     const h=Math.max(2,Math.min(p.v,6)*u);
@@ -350,7 +375,7 @@ function chartPal(){
     <line x1="42" y1="30" x2="42" y2="205" stroke="#000" stroke-width="2"/>
     <g font-family="Montserrat" font-size="9.5" font-weight="700" fill="#797979" text-anchor="end">
       <text x="36" y="209">0</text><text x="36" y="159">2</text><text x="36" y="109">4</text><text x="36" y="59">6</text></g>
-    ${bars}
+    ${seps}${bars}
     <line x1="42" y1="${205-META*u}" x2="574" y2="${205-META*u}" stroke="#000" stroke-width="2.5"/>
     <text x="576" y="${205-META*u-6}" font-family="Montserrat" font-size="11" font-weight="700">META 3</text>
     <line x1="580" y1="30" x2="580" y2="212" stroke="#000" stroke-width="1.5"/>
