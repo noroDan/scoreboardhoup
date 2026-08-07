@@ -82,7 +82,10 @@
   th.nm,td.nm{text-align:left;min-width:118px;position:sticky;left:0;z-index:2;background:#fff}
   th.nm{background:#F5F5F5}
   th.cur{background:#DFF6FE;color:var(--cyan)}
-  th.pr,td.pr{background:#EFEFEF;border-left:2px solid var(--negro)}
+  th.pr,td.pr{background:#EFEFEF;border-left:2px solid var(--negro);
+    position:sticky;right:0;z-index:3;box-shadow:-2px 0 4px rgba(0,0,0,.07)}
+  th.pr{background:#E4E4E4}
+  tr.delta td.pr{background:#E4E4E4}
   td input.cell{border:none;border-radius:0;text-align:center;font-weight:800;font-size:13px;padding:8px 0;width:44px;background:transparent}
   td input.nmi{border:none;border-radius:0;text-align:left;font-weight:700;font-size:11.5px;padding:8px 9px;background:transparent}
   td.up input.cell{background:#E4F7EC;color:#1E7F4A}
@@ -240,6 +243,7 @@
           <div class="scroll"><table id="matriz"></table></div>
           <button class="btn" id="addcli">+ AGREGAR CLIENTE</button>
           <button class="btn" id="addwk" style="margin-left:8px">+ SEMANA</button>
+          <button class="btn" id="editar" style="margin-left:8px">EDITAR LISTA</button>
         </div>
       </div>
     </div>
@@ -292,7 +296,7 @@ function bandasMeses(){
   return g.map(o=>({t:MESES[o.m].toUpperCase(),a:o.a,b:o.b}));}
 
 let D={clients:[],cobrado:{},commits:{},convo:[],week:1,resp:'',modo:'nuevo'};
-let VISTA='semana';
+let VISTA='semana', EDITAR=false;
 
 function wkDate(n){const d=new Date(START);d.setDate(d.getDate()+(n-1)*7);return d.getDate()+' '+MESES[d.getMonth()];}
 function metaOti(n){return Math.min(OTI_FIN,OTI_INI+(n-1)*PASO);}
@@ -519,7 +523,7 @@ function matriz(){
   h+='<th class="pr">PROM</th></tr></thead><tbody>';
   D.clients.forEach((c,ci)=>{
     h+=`<tr><td class="nm"><div style="display:flex;align-items:center">
-      <button class="btn x" data-del="${ci}" title="Borrar cliente" style="margin:0 0 0 6px;border:none;color:#C9C9C9">×</button>
+      ${EDITAR?`<button class="btn x" data-del="${ci}" title="Borrar cliente" style="margin:0 0 0 6px;border:none;color:#E5533D">×</button>`:''}
       <input class="nmi" data-ci="${ci}" data-f="name" value="${(c.name||'').replace(/"/g,'&quot;')}"></div></td>`;
     for(let i=1;i<=W;i++){
       const v=c.st[i]??'',p=c.st[i-1];
@@ -551,7 +555,7 @@ function llenarSel(){
   sel.value=D.week;}
 function opcSemanas(sel){
   let o=`<option value=""${!sel?' selected':''}>— para cuándo —</option>`;
-  for(let i=D.week;i<=Math.min(W,D.week+4);i++){
+  for(let i=D.week;i<=W;i++){
     const v='S'+i+' · '+wkDate(i);
     o+=`<option value="${v}"${sel===v?' selected':''}>${v}</option>`;}
   if(sel&&!o.includes('value="'+sel+'"'))o+=`<option value="${sel}" selected>${sel}</option>`;
@@ -576,7 +580,7 @@ function vistaHistorial(){
   for(let w=W;w>=1;w--){
     const cw=D.commits[String(w)];if(!cw)continue;
     let filas='',hay=false;
-    PERSONAS.forEach(p=>{(cw[p.k]||[]).forEach(c=>{
+    PERSONAS.forEach(p=>{(cw[p.k]||[]).forEach((c,ic)=>{
       if(!c.que&&!c.cuando)return;hay=true;
       const sn=SALTOS[Number(c.salto||0)];
       if(c.salto){stats[sn]=stats[sn]||{t:0,c:0};stats[sn].t++;if(c.cumplido)stats[sn].c++;}
@@ -584,9 +588,10 @@ function vistaHistorial(){
         <td style="text-align:left;padding:8px 9px">${(c.que||'').replace(/</g,'&lt;')||'—'}</td>
         <td style="padding:8px 9px">${(c.cuando||'').replace(/</g,'&lt;')||'—'}</td>
         <td style="text-align:left;padding:8px 9px;color:#02C1F4">${c.salto?sn:'—'}</td>
-        <td style="padding:8px 9px;font-weight:800;color:${c.cumplido?'#2FBF71':'#E5533D'}">${c.cumplido?'SÍ':'NO'}</td></tr>`;});});
+        <td style="padding:8px 9px;font-weight:800;color:${c.cumplido?'#2FBF71':'#E5533D'}">${c.cumplido?'SÍ':'NO'}</td>
+        <td style="padding:6px"><button class="btn x" data-delh="${w}" data-k="${p.k}" data-ix="${ic}" title="Borrar compromiso" style="border:none;color:#C9C9C9">×</button></td></tr>`;});});
     if(hay)sem.push(`<div class="per"><div class="who">SEMANA ${w} <span>${wkDate(w)}</span></div>
-      <div class="scroll"><table><thead><tr><th class="nm">PERSONA</th><th style="text-align:left">COMPROMISO</th><th>CUÁNDO</th><th style="text-align:left">SALTO</th><th>¿CUMPLIÓ?</th></tr></thead><tbody>${filas}</tbody></table></div></div>`);
+      <div class="scroll"><table><thead><tr><th class="nm">PERSONA</th><th style="text-align:left">COMPROMISO</th><th>CUÁNDO</th><th style="text-align:left">SALTO</th><th>¿CUMPLIÓ?</th><th></th></tr></thead><tbody>${filas}</tbody></table></div></div>`);
   }
   let res='';
   const ks=Object.keys(stats);
@@ -685,6 +690,8 @@ document.addEventListener('click',e=>{
   const t=e.target;
   if(t.id==='addcli'){D.clients.push({name:'',st:{}});save();render();}
   if(t.id==='addwk'){W++;D.semanas=W;save();llenarSel();render();}
+  if(t.id==='editar'){EDITAR=!EDITAR;t.textContent=EDITAR?'LISTO':'EDITAR LISTA';
+    t.style.color=EDITAR?'#E5533D':'';matriz();return;}
   if(t.id==='limpiar'){
     if(confirm('¿Borrar todos los compromisos de todas las semanas? Esto no se puede deshacer.')){
       D.commits={};save();comp();}return;}
@@ -699,6 +706,8 @@ document.addEventListener('click',e=>{
     const u=URL.createObjectURL(bl),l=document.createElement('a');
     l.href=u;l.download='marcador-houp-'+new Date().toISOString().slice(0,10)+'.json';l.click();
     URL.revokeObjectURL(u);return;}
+  if(t.dataset.delh!=null){const w=t.dataset.delh,k=t.dataset.k,ix=Number(t.dataset.ix);
+    if(D.commits[w]&&D.commits[w][k]){D.commits[w][k].splice(ix,1);save();comp();}return;}
   if(t.dataset.addcm){getArr(t.dataset.addcm).push({});save();comp();}
   if(t.dataset.delcm){const a=getArr(t.dataset.delcm);a.splice(Number(t.dataset.ix),1);
     if(!a.length)a.push({});save();comp();}
