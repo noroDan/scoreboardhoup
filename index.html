@@ -84,7 +84,10 @@
   th.cur{background:#DFF6FE;color:var(--cyan)}
   th.ini,td.ini{background:#F9F9F9;border-right:2px solid var(--negro)}
   th.ini{background:#EDEDED;letter-spacing:.1em}
-  tr.delta td.ini{background:#EDEDED;color:var(--gris)}
+  td.ini.prom{background:#E4E4E4;line-height:1.05;padding:6px 3px}
+  td.ini.prom b{display:block;font-size:17px;font-weight:800}
+  td.ini.prom i{display:block;font-style:normal;font-size:7.5px;letter-spacing:.16em;
+    font-weight:700;color:var(--gris);margin-top:1px}
   th.pr,td.pr{background:#EFEFEF;border-left:2px solid var(--negro);
     position:sticky;right:0;z-index:3;box-shadow:-2px 0 4px rgba(0,0,0,.07)}
   th.pr{background:#E4E4E4}
@@ -244,6 +247,10 @@
           <div class="ttl">DETALLE · EN QUÉ ETAPA ESTÁ CADA CLIENTE</div>
           <div class="desliza">DESLIZA PARA VER TODAS LAS SEMANAS →</div>
           <div class="scroll"><table id="matriz"></table></div>
+          <div class="nota" style="margin:10px 0 0">
+            <strong>Δ semanal</strong> = cuántas etapas avanzó el conjunto de clientes esa semana. Se suma el movimiento de cada uno: un cliente que pasa de 2 a 4 aporta 2. La columna <strong>INICIO</strong> es la etapa donde estaba cada cliente al arrancar; de S1 en adelante solo se registra movimiento.<br>
+            La celda gris del renglón Δ es el <strong>promedio de todas las semanas capturadas</strong> — ese es el número que se compara contra la meta de 3.
+          </div>
           <button class="btn" id="addcli">+ AGREGAR CLIENTE</button>
           <button class="btn" id="addwk" style="margin-left:8px">+ SEMANA</button>
           <button class="btn" id="editar" style="margin-left:8px">EDITAR LISTA</button>
@@ -527,7 +534,7 @@ function chartPal(){
 function matriz(){
   let h='<thead><tr><th class="nm">CLIENTE</th><th class="ini">INICIO</th>';
   for(let i=1;i<=W;i++)h+=`<th class="${i===D.week?'cur':''}">S${i}</th>`;
-  h+='<th class="pr">PROM</th></tr></thead><tbody>';
+  h+='</tr></thead><tbody>';
   D.clients.forEach((c,ci)=>{
     h+=`<tr><td class="nm"><div style="display:flex;align-items:center">
       ${EDITAR?`<button class="btn x" data-del="${ci}" title="Borrar cliente" style="margin:0 0 0 6px;border:none;color:#E5533D">×</button>`:''}
@@ -538,14 +545,15 @@ function matriz(){
       let cls=i===D.week?'cur ':'';
       if(v!==''&&Number(v)>p)cls+='up';
       h+=`<td class="${cls}"><input class="cell" type="number" min="1" max="6" data-ci="${ci}" data-w="${i}" value="${v}"></td>`;}
-    h+=`<td class="pr"></td></tr>`;});
-  h+='<tr class="delta"><td class="nm">Δ SEMANAL</td><td class="ini">—</td>';
+    h+='</tr>';});
+  const pr=promedio();
+  const pc=!pr?'':pr.v>=META?'v':pr.v>=META-1?'a':'r';
+  h+=`<tr class="delta"><td class="nm">Δ SEMANAL</td>
+    <td class="ini prom ${pc}"><b>${pr?pr.v.toFixed(1):'—'}</b><i>PROM</i></td>`;
   for(let i=1;i<=W;i++){const d=delta(i);
     const cl=d==null?'':d>=META?'v':d>=META-1?'a':'r';
     h+=`<td class="${cl}">${d==null?'—':d}</td>`;}
-  const p=promedio();
-  const pc=!p?'':p.v>=META?'v':p.v>=META-1?'a':'r';
-  h+=`<td class="pr ${pc}">${p?p.v.toFixed(1):'—'}</td></tr></tbody>`;
+  h+='</tr></tbody>';
   document.getElementById('matriz').innerHTML=h;
 }
 
