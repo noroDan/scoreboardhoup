@@ -69,7 +69,12 @@
 
   .tblwrap{margin-top:18px;border-top:1px solid var(--linea);padding-top:14px}
   .ttl{font-family:Montserrat,sans-serif;font-weight:800;font-size:9px;letter-spacing:.2em;color:var(--gris);margin-bottom:10px}
-  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;position:relative}
+  .scroll table{width:max-content;min-width:100%}
+  th.nm,td.nm{box-shadow:1px 0 0 var(--linea)}
+  .desliza{display:none;font-family:Montserrat,sans-serif;font-size:9.5px;
+    letter-spacing:.16em;color:var(--cyan);font-weight:700;margin-bottom:7px}
   table{border-collapse:separate;border-spacing:0;font-family:Montserrat,sans-serif;font-size:11px;width:100%}
   th{font-weight:700;font-size:8.5px;color:var(--gris);background:#F5F5F5;padding:6px 3px;
     border:1px solid var(--linea);text-align:center;white-space:nowrap}
@@ -113,13 +118,45 @@
   .chk{width:17px;height:17px;accent-color:var(--cyan)}
 
   @media (max-width:820px){
-    body{padding:12px 8px 50px}
+    body{padding:10px 8px 50px}
     .split{grid-template-columns:1fr}
     .pane.right{border-left:none;border-top:1px solid var(--linea)}
+    .pane{padding:18px 14px}
+    .viz{padding:16px 10px}
     .kicker{font-size:20px}.stmt{font-size:14.5px}
     .cline{grid-template-columns:1fr;gap:7px}
     .cump{padding-top:0}
-    .mant{gap:14px}
+    .mant{gap:14px;padding:14px}
+    .mant input{max-width:100%}
+
+    .bar{padding:12px 14px;gap:10px}
+    .bar .brand{font-size:11px;letter-spacing:.1em}
+    .wksel{font-size:9px;gap:6px;flex-wrap:wrap}
+    .chead{padding:12px 14px;gap:10px}
+    .stgroup{gap:14px;width:100%}
+    .status{gap:6px}
+    .stxt{font-size:9px}
+
+    /* evita el zoom automático de iOS al enfocar un campo */
+    input[type=text],input[type=number],textarea,select{font-size:16px}
+    input[type=number]{-moz-appearance:textfield}
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+    .desliza{display:block}
+    .scroll{margin:0 -14px;padding:0 14px}
+    th.nm,td.nm{min-width:132px}
+    td input.cell{font-size:15px;width:42px;padding:11px 0}
+    td input.nmi{font-size:13px}
+    .btn{padding:9px 12px}
+    .aparte{padding:16px 14px}
+    .com{padding:16px 14px}
+  }
+  @media (max-width:420px){
+    .bar .brand{font-size:10px}
+    .kicker{font-size:18px}
+    .big{font-size:26px}
+    .duo{gap:18px}
   }
 </style>
 </head>
@@ -199,8 +236,10 @@
         <div id="palchart"></div>
         <div class="tblwrap">
           <div class="ttl">DETALLE · EN QUÉ ETAPA ESTÁ CADA CLIENTE</div>
+          <div class="desliza">DESLIZA PARA VER TODAS LAS SEMANAS →</div>
           <div class="scroll"><table id="matriz"></table></div>
           <button class="btn" id="addcli">+ AGREGAR CLIENTE</button>
+          <button class="btn" id="addwk" style="margin-left:8px">+ SEMANA</button>
         </div>
       </div>
     </div>
@@ -212,6 +251,7 @@
       <div style="display:flex;gap:8px">
         <button class="btn" id="vista" style="margin:0">VER HISTORIAL</button>
         <button class="btn" id="expo" style="margin:0">EXPORTAR</button>
+        <button class="btn" id="limpiar" style="margin:0">LIMPIAR</button>
       </div></div>
     <div class="com">
       <div id="comrows"></div>
@@ -229,6 +269,7 @@
   <div class="aparte">
     <div class="ctag" style="margin-bottom:6px">CONVOCATORIAS · SEGUIMIENTO APARTE</div>
     <div class="nota" style="margin:0 0 14px">Los home runs se suben este año y se ganan en 2027. <strong>No cuentan para este OTI</strong> y no se revisan en la Junta OTI del lunes.</div>
+    <div class="desliza">DESLIZA PARA VER TODAS LAS COLUMNAS →</div>
     <div class="scroll"><table id="convo"></table></div>
     <button class="btn" id="addconv">+ AGREGAR CONVOCATORIA</button>
   </div>
@@ -236,19 +277,25 @@
 </div>
 
 <script>
-const W=21, META=3, OTI_INI=1100000, OTI_FIN=2900000, PASO=(OTI_FIN-OTI_INI)/(W-1);
+let W=21;
+const META=3, OTI_INI=1100000, OTI_FIN=2900000, PASO=(OTI_FIN-OTI_INI)/(W-1);
 const START=new Date(2026,7,4);
 const MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const PERSONAS=[{k:'andrea',n:'ANDREA',r:'líder'},{k:'karina',n:'KARINA',r:''},{k:'daniel',n:'DANIEL',r:''}];
 const SALTOS=['— ¿a qué salto le pega? —','Generar nuevos leads','Lead → Junta agendada','Junta → Propuesta enviada',
   'Propuesta → Seguimiento','Seguimiento → Negociación','Negociación → Cierre y cobro'];
-const BANDAS=[['AGO',1,4],['SEP',5,9],['OCT',10,13],['NOV',14,18],['DIC',19,21]];
+function bandasMeses(){
+  const g=[];
+  for(let i=1;i<=W;i++){const d=new Date(START);d.setDate(d.getDate()+(i-1)*7);
+    const m=d.getMonth(),y=d.getFullYear(),u=g[g.length-1];
+    if(u&&u.m===m&&u.y===y)u.b=i;else g.push({m,y,a:i,b:i});}
+  return g.map(o=>({t:MESES[o.m].toUpperCase(),a:o.a,b:o.b}));}
 
 let D={clients:[],cobrado:{},commits:{},convo:[],week:1,resp:'',modo:'nuevo'};
 let VISTA='semana';
 
 function wkDate(n){const d=new Date(START);d.setDate(d.getDate()+(n-1)*7);return d.getDate()+' '+MESES[d.getMonth()];}
-function metaOti(n){return OTI_INI+(n-1)*PASO;}
+function metaOti(n){return Math.min(OTI_FIN,OTI_INI+(n-1)*PASO);}
 function valOti(w){
   if(D.modo==='nuevo'){let t=OTI_INI;
     for(let i=1;i<=w;i++){const v=D.cobrado[i];if(v!=null&&v!=='')t+=Number(v);}
@@ -303,6 +350,7 @@ function defaults(){
   if(!D.convo||!D.convo.length)D.convo=[{},{},{}];
   if(!D.commits)D.commits={};
   if(!D.modo)D.modo='nuevo';
+  if(D.semanas&&D.semanas>21)W=D.semanas; else D.semanas=W;
   if(D.modo==='nuevo'&&Number(D.cobrado[1])===OTI_INI)D.cobrado[1]=0;
 }
 
@@ -379,7 +427,7 @@ function chartOti(){
 
   // separadores de mes + bandas
   let seps='',bandas='';
-  BANDAS.forEach(([m,a,b],i)=>{
+  bandasMeses().forEach(({t:m,a,b},i)=>{
     if(i>0){const xs=x(a)-((538/(W-1))/2);
       seps+=`<line x1="${xs}" y1="32" x2="${xs}" y2="262" stroke="#DCDCDC" stroke-width="1"/>`;}
     bandas+=`<text x="${(x(a)+x(b))/2}" y="284">${m}</text>`;});
@@ -389,6 +437,10 @@ function chartOti(){
   for(let i=1;i<=W;i++){
     ticks+=`<line x1="${x(i)}" y1="250" x2="${x(i)}" y2="256"/>`;
     labs+=`<text x="${x(i)}" y="268"${i===D.week?' fill="#02C1F4" font-weight="800"':''}>${i}</text>`;}
+
+  let metaPts=[];
+  for(let i=1;i<=W;i++)metaPts.push(x(i)+','+y(metaOti(i)));
+  metaPts=metaPts.join(' ');
 
   // puntos
   let pts=[],ult=null;
@@ -412,7 +464,7 @@ function chartOti(){
     ${grid}${seps}
     <line x1="72" y1="250" x2="618" y2="250" stroke="#000" stroke-width="2"/>
     <line x1="72" y1="32" x2="72" y2="250" stroke="#000" stroke-width="2"/>
-    <line x1="72" y1="250" x2="610" y2="38" stroke="#000" stroke-width="2.5" stroke-dasharray="8,5"/>
+    <polyline fill="none" stroke="#000" stroke-width="2.5" stroke-dasharray="8,5" points="${metaPts}"/>
     ${real}${dots}${guia}
     <g stroke="#C9C9C9" stroke-width="1">${ticks}</g>
     <g font-family="Montserrat" font-size="9.5" font-weight="700" fill="#797979" text-anchor="end">${ylab}</g>
@@ -423,7 +475,8 @@ function chartOti(){
 
 /* ---------- gráfica PALANCA ---------- */
 function chartPal(){
-  const bx=n=>48+(n-1)*24.5, base=205, u=25, ancho=17;
+  const span=Math.min(24.5,(574-48)/W), bx=n=>48+(n-1)*span,
+        base=205, u=25, ancho=Math.max(4,span-7.5);
   let bars='',labs='',bandas='';
   for(let i=1;i<=W;i++){
     const d=delta(i);
@@ -434,7 +487,7 @@ function chartPal(){
     labs+=`<text x="${bx(i)+ancho/2}" y="221"${i===D.week?' fill="#02C1F4" font-weight="700"':''}>${i}</text>`;
   }
   let seps='';
-  BANDAS.forEach(([m,a,b],i)=>{
+  bandasMeses().forEach(({t:m,a,b},i)=>{
     if(i>0)seps+=`<line x1="${bx(a)-4}" y1="30" x2="${bx(a)-4}" y2="212" stroke="#DCDCDC" stroke-width="1"/>`;
     bandas+=`<text x="${(bx(a)+bx(b)+ancho)/2}" y="238">${m}</text>`;});
   const p=promedio(); let pbar='';
@@ -454,7 +507,7 @@ function chartPal(){
     <line x1="580" y1="30" x2="580" y2="212" stroke="#000" stroke-width="1.5"/>
     ${pbar}
     <text x="599" y="221" font-family="Montserrat" font-size="8.5" font-weight="800" fill="#000" text-anchor="middle">PROM</text>
-    <g font-family="Montserrat" font-size="8.5" fill="#797979" text-anchor="middle">${labs}</g>
+    <g font-family="Montserrat" font-size="${W>26?7:8.5}" fill="#797979" text-anchor="middle">${labs}</g>
     <g font-family="Montserrat" font-size="9" fill="#797979" text-anchor="middle" letter-spacing="1.2">${bandas}</g>
   </svg>`;
 }
@@ -463,23 +516,25 @@ function chartPal(){
 function matriz(){
   let h='<thead><tr><th class="nm">CLIENTE</th>';
   for(let i=1;i<=W;i++)h+=`<th class="${i===D.week?'cur':''}">S${i}</th>`;
-  h+='<th class="pr">PROM</th><th></th></tr></thead><tbody>';
+  h+='<th class="pr">PROM</th></tr></thead><tbody>';
   D.clients.forEach((c,ci)=>{
-    h+=`<tr><td class="nm"><input class="nmi" data-ci="${ci}" data-f="name" value="${(c.name||'').replace(/"/g,'&quot;')}"></td>`;
+    h+=`<tr><td class="nm"><div style="display:flex;align-items:center">
+      <button class="btn x" data-del="${ci}" title="Borrar cliente" style="margin:0 0 0 6px;border:none;color:#C9C9C9">×</button>
+      <input class="nmi" data-ci="${ci}" data-f="name" value="${(c.name||'').replace(/"/g,'&quot;')}"></div></td>`;
     for(let i=1;i<=W;i++){
       const v=c.st[i]??'',p=c.st[i-1];
       let cls=i===D.week?'cur ':'';
       if(v!==''&&p!=null&&p!=='' &&Number(v)>Number(p))cls+='up';
       else if(v!==''&&(p==null||p===''))cls+='new';
       h+=`<td class="${cls}"><input class="cell" type="number" min="1" max="6" data-ci="${ci}" data-w="${i}" value="${v}"></td>`;}
-    h+=`<td class="pr"></td><td><button class="btn x" data-del="${ci}">×</button></td></tr>`;});
+    h+=`<td class="pr"></td></tr>`;});
   h+='<tr class="delta"><td class="nm">Δ SEMANAL</td>';
   for(let i=1;i<=W;i++){const d=delta(i);
     const cl=d==null?'':d>=META?'v':d>=META-1?'a':'r';
     h+=`<td class="${cl}">${d==null?'—':d}</td>`;}
   const p=promedio();
   const pc=!p?'':p.v>=META?'v':p.v>=META-1?'a':'r';
-  h+=`<td class="pr ${pc}">${p?p.v.toFixed(1):'—'}</td><td></td></tr></tbody>`;
+  h+=`<td class="pr ${pc}">${p?p.v.toFixed(1):'—'}</td></tr></tbody>`;
   document.getElementById('matriz').innerHTML=h;
 }
 
@@ -490,13 +545,24 @@ function comp(){
   if(bt)bt.textContent=VISTA==='semana'?'VER HISTORIAL':'VER ESTA SEMANA';
   document.getElementById('comrows').innerHTML=VISTA==='semana'?vistaSemana():vistaHistorial();
 }
+function llenarSel(){
+  const sel=document.getElementById('wk');
+  sel.innerHTML=Array.from({length:W},(_,i)=>`<option value="${i+1}">${i+1} de ${W}</option>`).join('');
+  sel.value=D.week;}
+function opcSemanas(sel){
+  let o=`<option value=""${!sel?' selected':''}>— para cuándo —</option>`;
+  for(let i=D.week;i<=Math.min(W,D.week+4);i++){
+    const v='S'+i+' · '+wkDate(i);
+    o+=`<option value="${v}"${sel===v?' selected':''}>${v}</option>`;}
+  if(sel&&!o.includes('value="'+sel+'"'))o+=`<option value="${sel}" selected>${sel}</option>`;
+  return o;}
 function vistaSemana(){
   const cw=D.commits[String(D.week)]||{};
   return PERSONAS.map(p=>{
     const arr=cw[p.k]&&cw[p.k].length?cw[p.k]:[{}];
     const lines=arr.map((c,ix)=>`<div class="cline">
       <textarea data-cm="${p.k}" data-ix="${ix}" data-f="que" placeholder="Qué me comprometo a hacer">${c.que||''}</textarea>
-      <input type="text" data-cm="${p.k}" data-ix="${ix}" data-f="cuando" placeholder="Para cuándo" value="${(c.cuando||'').replace(/"/g,'&quot;')}">
+      <select data-cm="${p.k}" data-ix="${ix}" data-f="cuando">${opcSemanas(c.cuando)}</select>
       <select data-cm="${p.k}" data-ix="${ix}" data-f="salto">
         ${SALTOS.map((s,si)=>`<option value="${si}"${Number(c.salto||0)===si?' selected':''}>${s}</option>`).join('')}
       </select>
@@ -607,6 +673,8 @@ document.addEventListener('change',e=>{
   const t=e.target;
   if(t.id==='wk'){D.week=Number(t.value);save();render();return;}
   if(t.id==='modo'){D.modo=t.value;save();render();return;}
+  if(t.dataset.cm&&t.dataset.f==='cuando'){const a=getArr(t.dataset.cm),ix=Number(t.dataset.ix);
+    a[ix]=a[ix]||{};a[ix].cuando=t.value;save();return;}
   if(t.dataset.cm&&t.dataset.f==='salto'){const a=getArr(t.dataset.cm);const ix=Number(t.dataset.ix);
     a[ix]=a[ix]||{};a[ix].salto=Number(t.value);save();return;}
   if(t.type==='checkbox'&&t.dataset.cv!=null){D.convo[t.dataset.cv][t.dataset.f]=t.checked;save();return;}
@@ -616,8 +684,15 @@ document.addEventListener('change',e=>{
 document.addEventListener('click',e=>{
   const t=e.target;
   if(t.id==='addcli'){D.clients.push({name:'',st:{}});save();render();}
+  if(t.id==='addwk'){W++;D.semanas=W;save();llenarSel();render();}
+  if(t.id==='limpiar'){
+    if(confirm('¿Borrar todos los compromisos de todas las semanas? Esto no se puede deshacer.')){
+      D.commits={};save();comp();}return;}
   if(t.id==='addconv'){D.convo.push({});save();convo();}
-  if(t.dataset.del!=null){D.clients.splice(t.dataset.del,1);save();render();}
+  if(t.dataset.del!=null){
+    const nb=D.clients[t.dataset.del].name||'este cliente';
+    if(confirm('¿Borrar a '+nb+' del marcador?')){D.clients.splice(t.dataset.del,1);save();render();}
+    return;}
   if(t.dataset.delc!=null){D.convo.splice(t.dataset.delc,1);save();convo();}
   if(t.id==='vista'){VISTA=VISTA==='semana'?'historial':'semana';comp();return;}
   if(t.id==='expo'){const bl=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
@@ -631,9 +706,9 @@ document.addEventListener('click',e=>{
 
 /* ---------- arranque ---------- */
 (async()=>{
-  const sel=document.getElementById('wk');
-  sel.innerHTML=Array.from({length:W},(_,i)=>`<option value="${i+1}">${i+1} de ${W}</option>`).join('');
+  llenarSel();
   await load();
+  llenarSel();
   const diff=Math.floor((new Date()-START)/(7*86400000))+1;
   if(!D.week)D.week=Math.max(1,Math.min(W,diff));
   render();
