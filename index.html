@@ -147,8 +147,14 @@
         <div class="big" id="oti-real">—</div>
         <div class="biglbl" id="oti-vs">Cobrado acumulado</div>
         <div class="capt">
-          <label>COBRADO ACUMULADO · SEMANA <span id="capwk">1</span></label>
-          <input type="number" id="cobrado" placeholder="1100000" step="1000">
+          <label>QUÉ ESTOY CAPTURANDO</label>
+          <select id="modo" style="margin-bottom:10px">
+            <option value="total">Acumulado total del año (incluye el $1.1M de ene–jun)</option>
+            <option value="periodo">Solo lo cobrado desde el 4 de agosto</option>
+          </select>
+          <label>MONTO · SEMANA <span id="capwk">1</span></label>
+          <input type="number" id="cobrado" placeholder="0" step="1000">
+          <div id="aviso" style="font-size:11.5px;color:var(--rojo);margin-top:8px;display:none"></div>
         </div>
       </div>
       <div class="pane right">
@@ -231,10 +237,12 @@ const SALTOS=['— ¿a qué salto le pega? —','Generar nuevos leads','Lead →
   'Propuesta → Seguimiento','Seguimiento → Negociación','Negociación → Cierre y cobro'];
 const BANDAS=[['AGO',1,4],['SEP',5,9],['OCT',10,13],['NOV',14,18],['DIC',19,21]];
 
-let D={clients:[],cobrado:{},commits:{},convo:[],week:1,resp:''};
+let D={clients:[],cobrado:{},commits:{},convo:[],week:1,resp:'',modo:'total'};
 
 function wkDate(n){const d=new Date(START);d.setDate(d.getDate()+(n-1)*7);return d.getDate()+' '+MESES[d.getMonth()];}
 function metaOti(n){return OTI_INI+(n-1)*PASO;}
+function valOti(w){const v=D.cobrado[w];if(v==null||v==='')return null;
+  return D.modo==='periodo'?OTI_INI+Number(v):Number(v);}
 function money(v){return '$'+Math.round(v).toLocaleString('en-US');}
 function mm(v){return '$'+(v/1000000).toFixed(2).replace(/0$/,'')+'M';}
 
@@ -252,6 +260,7 @@ function load(){
   if(!D.cobrado||!Object.keys(D.cobrado).length)D.cobrado={1:OTI_INI};
   if(!D.convo||!D.convo.length)D.convo=[{},{},{}];
   if(!D.commits)D.commits={};
+  if(!D.modo)D.modo='total';
 }
 
 /* ---------- cálculo ---------- */
@@ -284,7 +293,8 @@ function pintar(pre,est){
 
 /* ---------- gráfica OTI ---------- */
 function chartOti(){
-  const x=n=>72+(n-1)*(538/(W-1)), y=v=>250-((v-OTI_INI)/(OTI_FIN-OTI_INI))*212;
+  const x=n=>72+(n-1)*(538/(W-1));
+  const y=v=>Math.max(32,Math.min(250,250-((v-OTI_INI)/(OTI_FIN-OTI_INI))*212));
   const marcas=[1100000,1500000,2000000,2500000,2900000];
   let grid='',ylab='';
   marcas.forEach(v=>{grid+=`<line x1="72" y1="${y(v)}" x2="618" y2="${y(v)}" stroke="#EDEDED" stroke-width="1"/>`;
@@ -294,7 +304,7 @@ function chartOti(){
   [1,4,7,10,13,16,19,21].forEach(i=>{labs+=`<text x="${x(i)}" y="268"${i===D.week?' fill="#02C1F4" font-weight="700"':''}>${i}</text>`;});
   BANDAS.forEach(([m,a,b])=>{bandas+=`<text x="${(x(a)+x(b))/2}" y="286">${m}</text>`;});
   let pts=[];
-  for(let i=1;i<=W;i++){const v=D.cobrado[i];if(v!=null&&v!=='')pts.push([x(i),y(Number(v))]);}
+  for(let i=1;i<=W;i++){const v=valOti(i);if(v!=null)pts.push([x(i),y(v)]);}
   const real=pts.length>1?`<polyline fill="none" stroke="#02C1F4" stroke-width="3.5" points="${pts.map(p=>p.join(',')).join(' ')}"/>`:'';
   const dots=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#02C1F4"/>`).join('');
   document.getElementById('otichart').innerHTML=`
@@ -408,12 +418,15 @@ function convo(){
 
 /* ---------- render ---------- */
 function otiPane(){
-  const cb=D.cobrado[D.week], m=metaOti(D.week);
-  if(cb!=null&&cb!==''){
+  const cb=valOti(D.week), m=metaOti(D.week), av=document.getElementById('aviso');
+  av.style.display='none';
+  if(cb!=null){
+    if(cb<OTI_INI){av.style.display='block';
+      av.textContent='El acumulado quedó por debajo del punto de partida de $1.1M. Si estás capturando solo lo cobrado desde agosto, cambia el selector de arriba.';}
     document.getElementById('oti-real').textContent=money(cb);
-    const dif=Number(cb)-m;
+    const dif=cb-m;
     document.getElementById('oti-vs').textContent=(dif>=0?'Arriba de la meta por ':'Debajo de la meta por ')+money(Math.abs(dif))+' · meta '+money(m);
-    pintar('oti',estado(Number(cb)-OTI_INI+1,m-OTI_INI+1,'VAMOS GANANDO','VAMOS PERDIENDO'));
+    pintar('oti',estado(cb-OTI_INI+1,m-OTI_INI+1,'VAMOS GANANDO','VAMOS PERDIENDO'));
   }else{
     document.getElementById('oti-real').textContent='—';
     document.getElementById('oti-vs').textContent='Meta de esta semana: '+money(m);
@@ -425,6 +438,7 @@ function render(){
   document.getElementById('wk').value=D.week;
   document.getElementById('resp').value=D.resp||'';
   document.getElementById('cobrado').value=D.cobrado[D.week]??'';
+  document.getElementById('modo').value=D.modo;
   otiPane();
   const d=delta(D.week), p=promedio();
   document.getElementById('pal-sem').textContent=d==null?'—':d;
@@ -455,6 +469,7 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.id==='wk'){D.week=Number(t.value);save();render();return;}
+  if(t.id==='modo'){D.modo=t.value;save();chartOti();otiPane();return;}
   if(t.dataset.cm&&t.dataset.f==='salto'){const a=getArr(t.dataset.cm);const ix=Number(t.dataset.ix);
     a[ix]=a[ix]||{};a[ix].salto=Number(t.value);save();return;}
   if(t.type==='checkbox'&&t.dataset.cv!=null){D.convo[t.dataset.cv][t.dataset.f]=t.checked;save();}
