@@ -80,6 +80,10 @@
   .escala{margin-top:16px;border-top:1px solid var(--linea);padding-top:12px}
   .escala div{font-family:Montserrat,sans-serif;font-size:11px;color:var(--gris);padding:2px 0}
   .escala b{color:var(--cyan);font-weight:800;display:inline-block;width:14px}
+  .escala b.e6{color:var(--verde)}
+  .escala b.e7{color:var(--amar)}
+  .escala b.e8{color:var(--rojo)}
+  .escala .esep{margin-top:8px;padding-top:8px;border-top:1px solid var(--linea)}
 
   .tblwrap{margin-top:18px;border-top:1px solid var(--linea);padding-top:14px}
   .ttl{font-family:Montserrat,sans-serif;font-weight:800;font-size:9px;letter-spacing:.2em;color:var(--gris);margin-bottom:10px}
@@ -131,6 +135,7 @@
   tr.sep td.nm{color:#fff;text-align:left;padding-left:12px}
   tr.sep.ok td,tr.sep.ok td.nm,tr.sep.ok td.ini{background:#1E7F4A;border-right-color:#1E7F4A}
   tr.sep.mal td,tr.sep.mal td.nm,tr.sep.mal td.ini{background:#A33325;border-right-color:#A33325}
+  tr.sep.ama td,tr.sep.ama td.nm,tr.sep.ama td.ini{background:#E8B54A;border-right-color:#E8B54A}
   td.cur{box-shadow:inset 0 0 0 1px var(--cyan)}
   tr.delta td{background:#F5F5F5;font-family:Montserrat,sans-serif;font-weight:800;font-size:12px;padding:8px 3px}
   tr.delta td.nm{background:#F5F5F5}
@@ -282,7 +287,10 @@
         <div class="escala">
           <div><b>1</b> Lead calificado</div><div><b>2</b> Junta agendada</div>
           <div><b>3</b> Propuesta enviada</div><div><b>4</b> Seguimiento activo</div>
-          <div><b>5</b> Negociación final</div><div><b>6</b> Cerrado y cobrado</div>
+          <div><b>5</b> Negociación final</div>
+          <div><b class="e6">6</b> Cerrado y cobrado</div>
+          <div class="esep"><b class="e7">7</b> En riesgo · se enfrió</div>
+          <div><b class="e8">8</b> Soldado caído · se perdió</div>
         </div>
       </div>
       <div class="pane right">
@@ -599,7 +607,8 @@ function matriz(){
 
   const idx=D.clients.map((c,i)=>i);
   const act=idx.filter(i=>!cerrado(D.clients[i])&&!fuera(D.clients[i]));
-  const fue=idx.filter(i=>fuera(D.clients[i]));
+  const rie=idx.filter(i=>riesgo(D.clients[i]));
+  const cai=idx.filter(i=>caido(D.clients[i]));
   const cer=idx.filter(i=>cerrado(D.clients[i]));
 
   const fila=ci=>{
@@ -619,12 +628,16 @@ function matriz(){
       r+=`<td class="${cls}"><input class="cell" type="number" min="0" max="8" data-ci="${ci}" data-w="${i}" value="${v}"></td>`;}
     return r+'</tr>';};
 
-  const sep=(txt,n,tono)=>`<tr class="sep ${tono}"><td class="nm">${txt}</td><td class="ini">${n}</td>
-    <td colspan="${W}" style="text-align:left;padding:7px 10px">${tono==='ok'?'GANADOS · ya no se mueven':'FUERA DEL EMBUDO · no cuentan para el Δ'}</td></tr>`;
+  const sep=(txt,n,tono,pie)=>`<tr class="sep ${tono}"><td class="nm">${txt}</td><td class="ini">${n}</td>
+    <td colspan="${W}" style="text-align:left;padding:7px 10px">${pie}</td></tr>`;
 
   act.forEach(ci=>{h+=fila(ci);});
-  if(fue.length){h+=sep('EN RIESGO / CAÍDOS',fue.length,'mal');fue.forEach(ci=>{h+=fila(ci);});}
-  if(cer.length){h+=sep('CERRADOS',cer.length,'ok');cer.forEach(ci=>{h+=fila(ci);});}
+  if(rie.length){h+=sep('EN RIESGO',rie.length,'ama','SE ENFRIARON · siguen vivos, no cuentan para el Δ');
+    rie.forEach(ci=>{h+=fila(ci);});}
+  if(cai.length){h+=sep('SOLDADO CAÍDO',cai.length,'mal','SE PERDIERON · fuera del embudo');
+    cai.forEach(ci=>{h+=fila(ci);});}
+  if(cer.length){h+=sep('CERRADOS',cer.length,'ok','GANADOS · ya no se mueven');
+    cer.forEach(ci=>{h+=fila(ci);});}
 
   const pr=promedio();
   const pc=!pr?'':pr.v>=META?'v':pr.v>=META-1?'a':'r';
