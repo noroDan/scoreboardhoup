@@ -42,12 +42,31 @@
   .fb.on{background:var(--negro);color:#fff;border-color:var(--negro)}
   .fb i{font-style:normal;opacity:.55;margin-left:5px}
 
+  .guia{border:1px solid var(--linea);border-radius:3px;margin-bottom:16px;background:#FAFCFD}
+  .gtog{width:100%;text-align:left;font-family:Montserrat,sans-serif;font-weight:800;
+    font-size:9.5px;letter-spacing:.2em;color:var(--cyan);background:none;border:none;
+    padding:13px 15px;cursor:pointer}
+  .gbody{display:none;padding:0 15px 15px}
+  .gbody.on{display:block}
+  .gbody p{font-size:12.5px;color:var(--gris);line-height:1.5;margin-bottom:9px}
+  .gbody p strong{color:var(--negro)}
+  .gbody .gnota{border-top:1px solid var(--linea);padding-top:9px;margin-top:12px}
+  .lbtns{display:flex;gap:8px;flex-wrap:wrap}
+  .imp{border:1px solid var(--cyan);border-radius:3px;padding:15px;margin-top:12px;background:#FBFEFF}
+  .impt{font-family:Montserrat,sans-serif;font-weight:800;font-size:9.5px;
+    letter-spacing:.2em;color:var(--cyan);margin-bottom:9px}
+  .dias{font-family:Montserrat,sans-serif;font-weight:800;font-size:9px;letter-spacing:.1em;
+    padding:5px 9px;border-radius:3px;background:#F0F0F0;color:var(--gris);white-space:nowrap}
+  .dias.a{background:#FBF1DC;color:#9A7420}
+  .dias.r{background:#FBE4E0;color:#A33325}
+  .dup{background:#FEF8EC;border-left:3px solid var(--amar);padding:8px 10px;
+    font-size:11.5px;color:#9A7420;margin-bottom:9px}
   .lead{border:1px solid var(--linea);border-radius:3px;padding:14px;margin-bottom:11px;
     border-left:3px solid var(--linea)}
   .lead.calif{border-left-color:var(--cyan);background:#FBFEFF}
   .lead.embudo{border-left-color:var(--verde);background:#F5FBF7}
   .lead.desc{border-left-color:#C9C9C9;background:#FAFAFA;opacity:.75}
-  .lh{display:grid;grid-template-columns:1fr 168px 132px 28px;gap:8px;margin-bottom:9px}
+  .lh{display:grid;grid-template-columns:1fr 158px 122px 68px 28px;gap:8px;margin-bottom:9px;align-items:center}
   .lg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:9px}
   .lead input,.lead select,.lead textarea{font-size:12.5px;padding:8px 9px}
   .lead input.org{font-weight:800;font-size:14px}
@@ -406,9 +425,36 @@
         <div id="lresumen" class="lres"></div>
       </div>
       <div class="lwrap">
+        <div class="guia">
+          <button class="gtog" id="gtog">CÓMO SE USA ESTA BANDEJA ▾</button>
+          <div class="gbody" id="gbody">
+            <p><strong>1 · Agrega el lead en cuanto lo detectes.</strong> No esperes a tener todo. Una organización con nombre ya merece su tarjeta; los datos se completan después.</p>
+            <p><strong>2 · Llénalo hasta que las tres palomas prendan.</strong> Contacto directo (nombre, puesto y forma de contactarlo), tier asignado y una razón concreta por la que esa organización financiaría un programa de Fundación. Mientras falte una, el botón CALIFICAR sigue apagado — es a propósito.</p>
+            <p><strong>3 · Califica.</strong> El lead pasa a la lista de calificados y queda listo para que Karina llame. Aquí termina la prospección.</p>
+            <p><strong>4 · Daniel lo pasa al embudo</strong> cuando arranca el trabajo comercial. Entra solo a la matriz del marcador en etapa 1 de la semana en curso. No hay que recapturar nada.</p>
+            <p><strong>5 · Si no camina, descártalo y escribe por qué.</strong> No se borra: los descartados construyen el aprendizaje de qué tipo de prospecto no funciona.</p>
+            <p class="gnota"><strong>El contador de días</strong> marca cuánto lleva cada lead sin que nadie lo toque. Después de 10 días se pone amarillo y después de 21 rojo. Un lead calificado y estancado es trabajo hecho que se está enfriando — el filtro ESTANCADOS los junta para la Junta OTI del lunes.</p>
+            <p class="gnota"><strong>Los tres capturan y editan.</strong> Si escribes un nombre que ya existe, sale un aviso antes de que se duplique el trabajo.</p>
+          </div>
+        </div>
         <div class="filtros" id="filtros"></div>
         <div id="leadlist"></div>
-        <button class="btn" id="addlead">+ AGREGAR LEAD</button>
+        <div class="lbtns">
+          <button class="btn" id="addlead">+ AGREGAR LEAD</button>
+          <button class="btn" id="impabrir">IMPORTAR DEL EXCEL</button>
+        </div>
+        <div class="imp" id="imp" style="display:none">
+          <div class="impt">PEGA AQUÍ LAS FILAS DE TU EXCEL</div>
+          <p class="nota" style="margin:0 0 10px">Copia las filas en Excel (sin encabezados) y pégalas aquí. Una organización por renglón. El orden de columnas que reconoce es:<br>
+            <strong>Organización · Tipo · Tier · Contacto y puesto · Correo o teléfono · Cómo llegamos · Quién lo trae · Razón</strong><br>
+            Si tu Excel trae menos columnas no importa: lo que falte se deja en blanco y lo completas después. Con que venga el nombre, la tarjeta se crea.</p>
+          <textarea id="imptxt" style="min-height:120px;font-family:monospace;font-size:12px" placeholder="Ternium	Fondo con convocatoria	B	Laura Méndez, Relaciones	laura@ternium.com	Referida de Mauricio	Karina	Tienen fondo anual de educación"></textarea>
+          <div class="lbtns" style="margin-top:10px">
+            <button class="btn go" id="impok">IMPORTAR</button>
+            <button class="btn" id="impno">CANCELAR</button>
+          </div>
+          <div id="impmsg" class="nota" style="margin-top:9px"></div>
+        </div>
         <div class="nota" style="margin-top:14px">
           Un lead está <strong>calificado</strong> cuando tiene las tres palomas: contacto directo, tier asignado y una razón concreta por la que financiaría. Hasta entonces no pasa al embudo.<br>
           <strong>Pasar al embudo</strong> lo mete en la matriz del marcador en etapa 1 · Lead calificado. Los descartados se quedan con su razón — ahí se acumula el aprendizaje de qué no funciona.
@@ -797,25 +843,40 @@ const TIERS={'':'— tier —','A':'A · $850K','B':'B · $250K','C':'C · $100K
 const VALTIER={A:850000,B:250000,C:100000,D:30000};
 const DUENOS=['— quién lo trae —','Andrea','Karina','Daniel'];
 const ESTADOS=[['todos','TODOS'],['investigando','INVESTIGANDO'],['calificado','CALIFICADOS'],
-               ['embudo','EN EL EMBUDO'],['descartado','DESCARTADOS']];
+               ['estancado','ESTANCADOS'],['embudo','EN EL EMBUDO'],['descartado','DESCARTADOS']];
 let FILTRO='todos';
 
 function estLead(l){return l.est||'investigando';}
+function hoyISO(){return new Date().toISOString().slice(0,10);}
+function dias(l){const d=l.toc||l.alta;if(!d)return null;
+  return Math.max(0,Math.floor((new Date(hoyISO())-new Date(d))/86400000));}
+function tono(n){return n==null?'':n>=21?'r':n>=10?'a':'';}
+function estancado(l){const e=estLead(l);if(e==='embudo'||e==='descartado')return false;
+  const n=dias(l);return n!=null&&n>=10;}
+function tocar(l){l.toc=hoyISO();}
+function norm(t){return (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');}
+function duplicado(i){
+  const o=norm(D.leads[i].org);if(o.length<3)return null;
+  const enLeads=D.leads.some((l,k)=>k!==i&&norm(l.org)===o);
+  const enEmbudo=D.clients.some(c=>norm(c.name)===o);
+  return enEmbudo?'embudo':enLeads?'leads':null;}
 function listo(l){return !!(l.cContacto&&l.cTier&&l.cRazon);}
 
 function leads(){
   const t={};ESTADOS.forEach(([k])=>t[k]=0);
-  D.leads.forEach(l=>{t.todos++;t[estLead(l)]=(t[estLead(l)]||0)+1;});
+  D.leads.forEach(l=>{t.todos++;t[estLead(l)]=(t[estLead(l)]||0)+1;if(estancado(l))t.estancado++;});
   document.getElementById('filtros').innerHTML=ESTADOS.map(([k,n])=>
     `<button class="fb ${FILTRO===k?'on':''}" data-fl="${k}">${n}<i>${t[k]||0}</i></button>`).join('');
 
   let pot=0;D.leads.forEach(l=>{if(estLead(l)==='calificado'&&VALTIER[l.tier])pot+=VALTIER[l.tier];});
   document.getElementById('lresumen').innerHTML=
     `<span>CALIFICADOS<b>${t.calificado||0}</b></span>
-     <span>VALOR POTENCIAL<b>${money(pot)}</b></span>`;
+     <span>VALOR POTENCIAL<b>${money(pot)}</b></span>
+     <span style="color:${t.estancado?'#A33325':'var(--gris)'}">ESTANCADOS<b style="color:${t.estancado?'#A33325':'var(--negro)'}">${t.estancado||0}</b></span>`;
   document.getElementById('tcount').textContent=t.calificado?'· '+t.calificado:'';
 
-  const vis=D.leads.map((l,i)=>i).filter(i=>FILTRO==='todos'||estLead(D.leads[i])===FILTRO);
+  const vis=D.leads.map((l,i)=>i).filter(i=>FILTRO==='todos'?true:
+    FILTRO==='estancado'?estancado(D.leads[i]):estLead(D.leads[i])===FILTRO);
   if(!vis.length){document.getElementById('leadlist').innerHTML=
     '<div class="nota" style="margin:0 0 14px">No hay leads en esta vista.</div>';return;}
 
@@ -834,11 +895,16 @@ function leads(){
     else
       acc=`<span class="badge no">DESCARTADO</span><button class="btn" data-lrea="${i}">REACTIVAR</button>`;
 
+    const nd=dias(l), td=tono(nd), dup=duplicado(i);
+    const bd=(e==='embudo'||e==='descartado')?'<span class="dias">—</span>'
+      :`<span class="dias ${td}" title="Días sin tocar">${nd==null?'—':nd+' d'}</span>`;
     return `<div class="lead ${cls}">
+      ${dup?`<div class="dup"><strong>Ojo:</strong> ya existe otra ficha con este nombre ${dup==='embudo'?'en el embudo del marcador':'en esta bandeja'}. Revisa antes de seguir para que dos personas no le llamen al mismo contacto.</div>`:''}
       <div class="lh">
         <input class="org" type="text" data-li="${i}" data-f="org" placeholder="Organización" value="${(l.org||'').replace(/"/g,'&quot;')}">
         <select data-li="${i}" data-f="tipo">${TIPOS.map((t,k)=>`<option value="${k?t:''}"${(l.tipo||'')===(k?t:'')?' selected':''}>${t}</option>`).join('')}</select>
         <select data-li="${i}" data-f="tier">${Object.keys(TIERS).map(k=>`<option value="${k}"${(l.tier||'')===k?' selected':''}>${TIERS[k]}</option>`).join('')}</select>
+        ${bd}
         <button class="btn x" data-lx="${i}" style="margin:0;border:none;color:#C9C9C9">×</button>
       </div>
       <div class="lg">
@@ -954,8 +1020,9 @@ document.addEventListener('input',e=>{
   if(t.dataset.cm){const a=getArr(t.dataset.cm);const ix=Number(t.dataset.ix);
     a[ix]=a[ix]||{};a[ix][t.dataset.f]=t.value;save();return;}
   if(t.dataset.cv!=null){D.convo[t.dataset.cv][t.dataset.f]=t.type==='checkbox'?t.checked:t.value;save();return;}
-  if(t.dataset.li!=null&&t.type!=='checkbox'){D.leads[t.dataset.li][t.dataset.f]=t.value;save();
-    if(t.dataset.f==='tier')leads();return;}
+  if(t.dataset.li!=null&&t.type!=='checkbox'){const l=D.leads[t.dataset.li];
+    l[t.dataset.f]=t.value;tocar(l);save();
+    if(t.dataset.f==='tier'||t.dataset.f==='org')leads();return;}
 });
 document.addEventListener('change',e=>{
   const t=e.target;
@@ -967,7 +1034,7 @@ document.addEventListener('change',e=>{
     a[ix]=a[ix]||{};a[ix].salto=Number(t.value);save();return;}
   if(t.type==='checkbox'&&t.dataset.cv!=null){D.convo[t.dataset.cv][t.dataset.f]=t.checked;save();return;}
   if(t.dataset.li!=null){const l=D.leads[t.dataset.li];
-    l[t.dataset.f]=t.type==='checkbox'?t.checked:t.value;save();leads();return;}
+    l[t.dataset.f]=t.type==='checkbox'?t.checked:t.value;tocar(l);save();leads();return;}
   if(t.type==='checkbox'&&t.dataset.cm){const ar=getArr(t.dataset.cm),ix=Number(t.dataset.ix);
     ar[ix]=ar[ix]||{};ar[ix].cumplido=t.checked;save();}
 });
@@ -977,11 +1044,45 @@ document.addEventListener('click',e=>{
     document.getElementById('tab-marcador').style.display=t.dataset.tab==='marcador'?'':'none';
     document.getElementById('tab-leads').style.display=t.dataset.tab==='leads'?'':'none';return;}
   if(t.dataset.fl){FILTRO=t.dataset.fl;leads();return;}
-  if(t.id==='addlead'){D.leads.unshift({est:'investigando',alta:new Date().toISOString().slice(0,10)});
+  if(t.id==='gtog'){document.getElementById('gbody').classList.toggle('on');
+    t.textContent=document.getElementById('gbody').classList.contains('on')
+      ?'CÓMO SE USA ESTA BANDEJA ▴':'CÓMO SE USA ESTA BANDEJA ▾';return;}
+  if(t.id==='impabrir'){const b=document.getElementById('imp');
+    b.style.display=b.style.display==='none'?'block':'none';
+    if(b.style.display==='block')document.getElementById('imptxt').focus();return;}
+  if(t.id==='impno'){document.getElementById('imp').style.display='none';
+    document.getElementById('imptxt').value='';document.getElementById('impmsg').textContent='';return;}
+  if(t.id==='impok'){
+    const txt=document.getElementById('imptxt').value.trim();
+    const msg=document.getElementById('impmsg');
+    if(!txt){msg.textContent='No hay nada que importar.';return;}
+    const filas=txt.split(/\r?\n/).map(r=>r.trim()).filter(Boolean);
+    let n=0,dups=[];
+    filas.forEach(f=>{
+      const c=f.split(/\t|;|\|/).map(x=>x.trim());
+      const org=c[0];if(!org)return;
+      if(D.leads.some(l=>norm(l.org)===norm(org))||D.clients.some(cl=>norm(cl.name)===norm(org)))dups.push(org);
+      const tp=(c[1]||'').toLowerCase();
+      const tipo=tp.includes('convocatoria')||tp.includes('fondo')?'Fondo con convocatoria'
+        :tp.includes('ac')||tp.includes('empresa')?'Empresa con AC'
+        :tp.includes('escuela')||tp.includes('patrocin')?'Patrocinador de escuela'
+        :tp?'Otro':'';
+      const tr=(c[2]||'').trim().toUpperCase().charAt(0);
+      D.leads.unshift({est:'investigando',alta:hoyISO(),toc:hoyISO(),
+        org:org,tipo:tipo,tier:'ABCD'.includes(tr)?tr:'',
+        contacto:c[3]||'',via:c[4]||'',fuente:c[5]||'',
+        duenio:['Andrea','Karina','Daniel'].find(d=>norm(d)===norm(c[6]))||'',
+        razon:c[7]||''});
+      n++;});
+    save();FILTRO='todos';leads();
+    document.getElementById('imptxt').value='';
+    msg.innerHTML=n?`Se importaron <strong>${n}</strong> leads.`+(dups.length?` Ojo: ${dups.length} ya existían (${dups.slice(0,3).join(', ')}${dups.length>3?'…':''}) — revísalos antes de trabajarlos.`:''):'No se reconoció ningún renglón.';
+    return;}
+  if(t.id==='addlead'){D.leads.unshift({est:'investigando',alta:hoyISO(),toc:hoyISO()});
     FILTRO='todos';save();leads();return;}
-  if(t.dataset.lcal!=null){D.leads[t.dataset.lcal].est='calificado';save();leads();return;}
+  if(t.dataset.lcal!=null){const l=D.leads[t.dataset.lcal];l.est='calificado';tocar(l);save();leads();return;}
   if(t.dataset.ldes!=null){D.leads[t.dataset.ldes].est='descartado';save();leads();return;}
-  if(t.dataset.lrea!=null){D.leads[t.dataset.lrea].est='investigando';save();leads();return;}
+  if(t.dataset.lrea!=null){const l=D.leads[t.dataset.lrea];l.est='investigando';tocar(l);save();leads();return;}
   if(t.dataset.lemb!=null){const l=D.leads[t.dataset.lemb];
     if(!l.org){alert('Ponle nombre a la organización antes de pasarlo al embudo.');return;}
     if(!confirm('¿Pasar a '+l.org+' al embudo? Entra en la matriz del marcador en etapa 1, semana '+D.week+'.'))return;
