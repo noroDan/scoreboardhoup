@@ -898,7 +898,7 @@ function leads(){
     const nd=dias(l), td=tono(nd), dup=duplicado(i);
     const bd=(e==='embudo'||e==='descartado')?'<span class="dias">—</span>'
       :`<span class="dias ${td}" title="Días sin tocar">${nd==null?'—':nd+' d'}</span>`;
-    return `<div class="lead ${cls}">
+    return `<div class="lead ${cls}" data-card="${i}">
       ${dup?`<div class="dup"><strong>Ojo:</strong> ya existe otra ficha con este nombre ${dup==='embudo'?'en el embudo del marcador':'en esta bandeja'}. Revisa antes de seguir para que dos personas no le llamen al mismo contacto.</div>`:''}
       <div class="lh">
         <input class="org" type="text" data-li="${i}" data-f="org" placeholder="Organización" value="${(l.org||'').replace(/"/g,'&quot;')}">
@@ -922,6 +922,20 @@ function leads(){
         <span class="lacc">${acc}</span>
       </div>
     </div>`;}).join('');
+}
+
+function refrescaDups(){
+  document.querySelectorAll('.lead[data-card]').forEach(card=>{
+    const i=Number(card.dataset.card), dup=duplicado(i);
+    let b=card.querySelector('.dup');
+    if(dup){
+      const txt='<strong>Ojo:</strong> ya existe otra ficha con este nombre '+
+        (dup==='embudo'?'en el embudo del marcador':'en esta bandeja')+
+        '. Revisa antes de seguir para que dos personas no le llamen al mismo contacto.';
+      if(!b){b=document.createElement('div');b.className='dup';card.insertBefore(b,card.firstChild);}
+      if(b.innerHTML!==txt)b.innerHTML=txt;
+    }else if(b)b.remove();
+  });
 }
 
 /* ---------- convocatorias ---------- */
@@ -1022,7 +1036,8 @@ document.addEventListener('input',e=>{
   if(t.dataset.cv!=null){D.convo[t.dataset.cv][t.dataset.f]=t.type==='checkbox'?t.checked:t.value;save();return;}
   if(t.dataset.li!=null&&t.type!=='checkbox'){const l=D.leads[t.dataset.li];
     l[t.dataset.f]=t.value;tocar(l);save();
-    if(t.dataset.f==='tier'||t.dataset.f==='org')leads();return;}
+    if(t.dataset.f==='org')refrescaDups();
+    return;}
 });
 document.addEventListener('change',e=>{
   const t=e.target;
@@ -1034,7 +1049,9 @@ document.addEventListener('change',e=>{
     a[ix]=a[ix]||{};a[ix].salto=Number(t.value);save();return;}
   if(t.type==='checkbox'&&t.dataset.cv!=null){D.convo[t.dataset.cv][t.dataset.f]=t.checked;save();return;}
   if(t.dataset.li!=null){const l=D.leads[t.dataset.li];
-    l[t.dataset.f]=t.type==='checkbox'?t.checked:t.value;tocar(l);save();leads();return;}
+    l[t.dataset.f]=t.type==='checkbox'?t.checked:t.value;tocar(l);save();
+    if(t.type==='checkbox'||t.dataset.f==='tier')leads();else refrescaDups();
+    return;}
   if(t.type==='checkbox'&&t.dataset.cm){const ar=getArr(t.dataset.cm),ix=Number(t.dataset.ix);
     ar[ix]=ar[ix]||{};ar[ix].cumplido=t.checked;save();}
 });
