@@ -48,6 +48,20 @@
   .duo .b{font-family:Montserrat,sans-serif;font-weight:800;font-size:26px;line-height:1}
   .duo .l{font-size:10px;color:var(--gris);letter-spacing:.1em;font-family:Montserrat,sans-serif;font-weight:700;margin-top:4px}
 
+  .prog{margin-top:18px}
+  .pbar{height:11px;background:#E4E4E4;border-radius:6px;overflow:hidden}
+  .pbar span{display:block;height:100%;background:var(--cyan);width:0;
+    border-radius:6px;transition:width .4s}
+  .pnums{display:flex;justify-content:space-between;margin-top:9px}
+  .pnums b{display:block;font-family:Montserrat,sans-serif;font-weight:800;font-size:17px}
+  .pnums i{display:block;font-style:normal;font-family:Montserrat,sans-serif;font-weight:700;
+    font-size:8.5px;letter-spacing:.16em;color:var(--gris);margin-top:2px}
+  #pdesglose{margin-top:12px;border-top:1px solid var(--linea);padding-top:9px}
+  .lrow{display:flex;justify-content:space-between;gap:10px;padding:3px 0;
+    font-family:Montserrat,sans-serif;font-size:11.5px;color:var(--gris)}
+  .lrow b{color:var(--negro);font-weight:700}
+  .lcap{display:grid;grid-template-columns:1fr 118px 26px;gap:6px;margin-bottom:6px;align-items:center}
+  .lcap input.ln{font-size:11.5px;font-weight:700;padding:8px 9px}
   .capt{margin-top:16px;border-top:1px solid var(--linea);padding-top:14px}
   .capt label{display:block;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;
     letter-spacing:.16em;color:var(--gris);margin-bottom:6px}
@@ -101,10 +115,22 @@
   tr.cerrado td{background:#F3FBF6}
   tr.cerrado td.nm{background:#F3FBF6}
   tr.cerrado td.ini{background:#EAF6EF}
-  tr.sep td{background:#1E7F4A;color:#fff;font-family:Montserrat,sans-serif;
+  td.c7 input.cell{background:#E8B54A;color:#fff}
+  td.c8 input.cell{background:#E5533D;color:#fff}
+  tr.riesgo td,tr.riesgo td.nm{background:#FEF8EC}
+  tr.riesgo td.ini{background:#FBF1DC}
+  tr.riesgo td.nm input.nmi{color:#9A7420}
+  tr.caido td,tr.caido td.nm{background:#FDF1EF}
+  tr.caido td.ini{background:#F8E3DF}
+  tr.caido td.nm input.nmi{color:#A33325;text-decoration:line-through}
+  input.nota-i{border:none;border-top:1px solid rgba(0,0,0,.07);border-radius:0;
+    font-size:10.5px;font-style:italic;padding:5px 9px 6px 12px;background:transparent;
+    color:var(--gris);width:100%}
+  tr.sep td{color:#fff;font-family:Montserrat,sans-serif;
     font-weight:800;font-size:8.5px;letter-spacing:.2em;padding:7px 3px}
-  tr.sep td.nm{background:#1E7F4A;color:#fff;text-align:left;padding-left:12px}
-  tr.sep td.ini{background:#1E7F4A;color:#fff;border-right-color:#1E7F4A}
+  tr.sep td.nm{color:#fff;text-align:left;padding-left:12px}
+  tr.sep.ok td,tr.sep.ok td.nm,tr.sep.ok td.ini{background:#1E7F4A;border-right-color:#1E7F4A}
+  tr.sep.mal td,tr.sep.mal td.nm,tr.sep.mal td.ini{background:#A33325;border-right-color:#A33325}
   td.cur{box-shadow:inset 0 0 0 1px var(--cyan)}
   tr.delta td{background:#F5F5F5;font-family:Montserrat,sans-serif;font-weight:800;font-size:12px;padding:8px 3px}
   tr.delta td.nm{background:#F5F5F5}
@@ -204,14 +230,23 @@
         <div class="hint">Pesos cobrados acumulados. La línea de meta sube $90,000 cada semana.</div>
         <div class="big" id="oti-real">—</div>
         <div class="biglbl" id="oti-vs">Cobrado acumulado</div>
+        <div class="prog">
+          <div class="pbar"><span id="pfill"></span></div>
+          <div class="pnums">
+            <span><b id="pllev">—</b><i>LLEVAMOS</i></span>
+            <span style="text-align:right"><b id="pfalt">—</b><i>NOS FALTA</i></span>
+          </div>
+          <div id="pdesglose"></div>
+        </div>
         <div class="capt">
           <label>QUÉ ESTOY CAPTURANDO</label>
-          <select id="modo" style="margin-bottom:10px">
+          <select id="modo" style="margin-bottom:12px">
             <option value="nuevo">Cobrado nuevo de la semana — se acumula solo</option>
             <option value="total">Acumulado total del año</option>
           </select>
           <label><span id="caplbl">COBRADO NUEVO</span> · SEMANA <span id="capwk">1</span></label>
-          <input type="number" id="cobrado" placeholder="0" step="1000">
+          <div id="lineas"></div>
+          <button class="btn" id="addlin" style="margin-top:8px">+ LÍNEA DE VENTA</button>
           <div id="aviso" style="font-size:11.5px;color:var(--rojo);margin-top:8px;display:none"></div>
         </div>
       </div>
@@ -260,7 +295,8 @@
           <div class="scroll"><table id="matriz"></table></div>
           <div class="nota" style="margin:10px 0 0">
             <strong>Δ semanal</strong> = cuántas etapas avanzó el conjunto de clientes esa semana. Se suma el movimiento de cada uno: un cliente que pasa de 2 a 4 aporta 2. La columna <strong>INICIO</strong> es la etapa donde estaba cada cliente al arrancar; de S1 en adelante solo se registra movimiento.<br>
-            La celda gris del renglón Δ es el <strong>promedio de todas las semanas capturadas</strong> — ese es el número que se compara contra la meta de 3.
+            La celda gris del renglón Δ es el <strong>promedio de todas las semanas capturadas</strong> — ese es el número que se compara contra la meta de 3.<br>
+            <strong>7</strong> marca un cliente en riesgo y <strong>8</strong> un soldado caído. Ninguno de los dos cuenta para el Δ; ambos piden una nota de qué pasó.
           </div>
           <button class="btn" id="addcli">+ AGREGAR CLIENTE</button>
           <button class="btn" id="addwk" style="margin-left:8px">+ SEMANA</button>
@@ -316,16 +352,20 @@ function bandasMeses(){
     if(u&&u.m===m&&u.y===y)u.b=i;else g.push({m,y,a:i,b:i});}
   return g.map(o=>({t:MESES[o.m].toUpperCase(),a:o.a,b:o.b}));}
 
-let D={clients:[],cobrado:{},commits:{},convo:[],week:1,resp:'',modo:'nuevo'};
+let D={clients:[],cobrado:{},commits:{},convo:[],week:1,resp:'',modo:'nuevo',lineas:null,cob:null};
 let VISTA='semana', EDITAR=false;
 
 function wkDate(n){const d=new Date(START);d.setDate(d.getDate()+(n-1)*7);return d.getDate()+' '+MESES[d.getMonth()];}
 function metaOti(n){return Math.min(OTI_FIN,OTI_INI+(n-1)*PASO);}
+function sumaSem(w){let t=0;D.lineas.forEach((_,i)=>{const v=(D.cob[i]||{})[w];
+  if(v!=null&&v!=='')t+=Number(v);});return t;}
+function acumLinea(i,w){let t=0;for(let k=1;k<=w;k++){const v=(D.cob[i]||{})[k];
+  if(v!=null&&v!=='')t+=Number(v);}return t;}
 function valOti(w){
   if(D.modo==='nuevo'){let t=OTI_INI;
-    for(let i=1;i<=w;i++){const v=D.cobrado[i];if(v!=null&&v!=='')t+=Number(v);}
+    for(let i=1;i<=w;i++)t+=sumaSem(i);
     return w<=D.week?t:null;}
-  const v=D.cobrado[w];return (v==null||v==='')?null:Number(v);}
+  const v=(D.cob[0]||{})[w];return (v==null||v==='')?null:Number(v);}
 function money(v){return '$'+Math.round(v).toLocaleString('en-US');}
 function mm(v){return '$'+(v/1000000).toFixed(2).replace(/0$/,'')+'M';}
 
@@ -371,13 +411,15 @@ function save(){
 function defaults(){
   if(!D.clients||!D.clients.length)
     D.clients=[['Friza',2],['Zaber',1],['Gonher',4],['Alfa',1],['Mr. Lucky',1],['Aída Barragán',1]].map(([n,s])=>({name:n,st:{1:s}}));
-  if(!D.cobrado)D.cobrado={};
+  if(!D.lineas||!D.lineas.length)D.lineas=[{n:'Proyectos Fundación'}];
+  if(!D.cob){D.cob={};D.cob[0]=D.cobrado&&Object.keys(D.cobrado).length?D.cobrado:{};}
+  D.lineas.forEach((_,i)=>{if(!D.cob[i])D.cob[i]={};});
   if(!D.convo||!D.convo.length)D.convo=[{},{},{}];
   if(!D.commits)D.commits={};
   D.clients.forEach(c=>{if(c.st[0]==null||c.st[0]==='')c.st[0]=0;});
   if(!D.modo)D.modo='nuevo';
   if(D.semanas&&D.semanas>21)W=D.semanas; else D.semanas=W;
-  if(D.modo==='nuevo'&&Number(D.cobrado[1])===OTI_INI)D.cobrado[1]=0;
+  if(D.modo==='nuevo'&&Number((D.cob[0]||{})[1])===OTI_INI)D.cob[0][1]=0;
 }
 
 async function traer(){
@@ -418,15 +460,19 @@ function sincronizar(){
 function etapaActual(c){
   for(let i=W;i>=0;i--){const v=c.st[i];if(v!=null&&v!=='')return Number(v);}
   return 0;}
-function cerrado(c){return etapaActual(c)>=6;}
+function cerrado(c){return etapaActual(c)===6;}
+function riesgo(c){return etapaActual(c)===7;}
+function caido(c){return etapaActual(c)===8;}
+function fuera(c){const e=etapaActual(c);return e===7||e===8;}
 function etapaPrev(c,w){
-  for(let i=w-1;i>=0;i--){const v=c.st[i];if(v!=null&&v!=='')return Number(v);}
+  for(let i=w-1;i>=0;i--){const v=c.st[i];if(v!=null&&v!==''&&Number(v)<=6)return Number(v);}
   return 0;
 }
 function delta(w){
   let t=0,any=false;
   D.clients.forEach(c=>{const a=c.st[w];
-    if(a!=null&&a!==''){any=true;t+=Math.max(0,Number(a)-etapaPrev(c,w));}});
+    if(a!=null&&a!==''){any=true;
+      if(Number(a)<=6)t+=Math.max(0,Number(a)-etapaPrev(c,w));}});
   return any?t:null;
 }
 function promedio(){
@@ -547,33 +593,38 @@ function chartPal(){
 
 /* ---------- matriz ---------- */
 function matriz(){
-  const NC=W+2;
   let h='<thead><tr><th class="nm">CLIENTE</th><th class="ini">INICIO</th>';
   for(let i=1;i<=W;i++)h+=`<th class="${i===D.week?'cur':''}">S${i}</th>`;
   h+='</tr></thead><tbody>';
 
   const idx=D.clients.map((c,i)=>i);
-  const act=idx.filter(i=>!cerrado(D.clients[i]));
+  const act=idx.filter(i=>!cerrado(D.clients[i])&&!fuera(D.clients[i]));
+  const fue=idx.filter(i=>fuera(D.clients[i]));
   const cer=idx.filter(i=>cerrado(D.clients[i]));
 
   const fila=ci=>{
-    const c=D.clients[ci], cl=cerrado(c);
-    let r=`<tr class="${cl?'cerrado':''}"><td class="nm"><div style="display:flex;align-items:center">
+    const c=D.clients[ci], cl=cerrado(c), rg=riesgo(c), cd=caido(c);
+    const clase=cl?'cerrado':rg?'riesgo':cd?'caido':'';
+    let r=`<tr class="${clase}"><td class="nm"><div style="display:flex;align-items:center">
       ${EDITAR?`<button class="btn x" data-del="${ci}" title="Borrar cliente" style="margin:0 0 0 6px;border:none;color:#E5533D">×</button>`:''}
-      <input class="nmi" data-ci="${ci}" data-f="name" value="${(c.name||'').replace(/"/g,'&quot;')}"></div></td>
-      <td class="ini"><input class="cell" type="number" min="0" max="6" data-ci="${ci}" data-w="0" value="${c.st[0]??0}"></td>`;
+      <input class="nmi" data-ci="${ci}" data-f="name" value="${(c.name||'').replace(/"/g,'&quot;')}"></div>
+      ${(rg||cd)?`<input class="nota-i" data-ci="${ci}" data-f="nota" placeholder="¿Qué pasó?" value="${(c.nota||'').replace(/"/g,'&quot;')}">`:''}</td>
+      <td class="ini"><input class="cell" type="number" min="0" max="8" data-ci="${ci}" data-w="0" value="${c.st[0]??0}"></td>`;
     for(let i=1;i<=W;i++){
       const v=c.st[i]??'', p=etapaPrev(c,i);
       let cls=i===D.week?'cur ':'';
-      if(v!==''&&Number(v)>p)cls+=(Number(v)===6?'gana':'up');
-      r+=`<td class="${cls}"><input class="cell" type="number" min="0" max="6" data-ci="${ci}" data-w="${i}" value="${v}"></td>`;}
+      if(v!==''){const n=Number(v);
+        if(n===8)cls+='c8';else if(n===7)cls+='c7';
+        else if(n===6)cls+='gana';else if(n>p)cls+='up';}
+      r+=`<td class="${cls}"><input class="cell" type="number" min="0" max="8" data-ci="${ci}" data-w="${i}" value="${v}"></td>`;}
     return r+'</tr>';};
 
+  const sep=(txt,n,tono)=>`<tr class="sep ${tono}"><td class="nm">${txt}</td><td class="ini">${n}</td>
+    <td colspan="${W}" style="text-align:left;padding:7px 10px">${tono==='ok'?'GANADOS · ya no se mueven':'FUERA DEL EMBUDO · no cuentan para el Δ'}</td></tr>`;
+
   act.forEach(ci=>{h+=fila(ci);});
-  if(cer.length){
-    h+=`<tr class="sep"><td class="nm">CERRADOS</td><td class="ini">${cer.length}</td>
-        <td colspan="${W}" style="text-align:left;padding:7px 10px">GANADOS · ya no se mueven</td></tr>`;
-    cer.forEach(ci=>{h+=fila(ci);});}
+  if(fue.length){h+=sep('EN RIESGO / CAÍDOS',fue.length,'mal');fue.forEach(ci=>{h+=fila(ci);});}
+  if(cer.length){h+=sep('CERRADOS',cer.length,'ok');cer.forEach(ci=>{h+=fila(ci);});}
 
   const pr=promedio();
   const pc=!pr?'':pr.v>=META?'v':pr.v>=META-1?'a':'r';
@@ -668,6 +719,27 @@ function convo(){
 }
 
 /* ---------- render ---------- */
+function pintaLineas(){
+  document.getElementById('lineas').innerHTML=D.lineas.map((l,i)=>`
+    <div class="lcap">
+      <input class="ln" type="text" data-ln="${i}" value="${(l.n||'').replace(/"/g,'&quot;')}" placeholder="Nombre de la línea">
+      <input type="number" data-lc="${i}" step="1000" placeholder="0" value="${(D.cob[i]||{})[D.week]??''}">
+      ${D.lineas.length>1?`<button class="btn x" data-lnx="${i}" style="margin:0;border:none;color:#C9C9C9">×</button>`:'<span></span>'}
+    </div>`).join('');
+}
+function pintaAvance(){
+  const cb=valOti(D.week);
+  const llev=cb==null?OTI_INI:cb, falt=Math.max(0,OTI_FIN-llev);
+  const pc=Math.max(0,Math.min(100,(llev-OTI_INI)/(OTI_FIN-OTI_INI)*100));
+  document.getElementById('pfill').style.width=pc+'%';
+  document.getElementById('pllev').textContent=money(llev);
+  document.getElementById('pfalt').textContent=money(falt);
+  let d=`<div class="lrow"><span>Punto de partida</span><b>${money(OTI_INI)}</b></div>`;
+  D.lineas.forEach((l,i)=>{d+=`<div class="lrow"><span>${(l.n||'Línea '+(i+1))}</span><b>+ ${money(acumLinea(i,D.week))}</b></div>`;});
+  d+=`<div class="lrow" style="border-top:1px solid var(--linea);margin-top:5px;padding-top:6px">
+      <span>Avance</span><b style="color:var(--cyan)">${pc.toFixed(1)}%</b></div>`;
+  document.getElementById('pdesglose').innerHTML=d;
+}
 function otiPane(){
   const cb=valOti(D.week), m=metaOti(D.week), av=document.getElementById('aviso');
   av.style.display='none';
@@ -688,31 +760,37 @@ function render(){
   document.getElementById('wkdate').textContent=wkDate(D.week);
   document.getElementById('wk').value=D.week;
   document.getElementById('resp').value=D.resp||'';
-  document.getElementById('cobrado').value=D.cobrado[D.week]??'';
-  document.getElementById('modo').value=D.modo;
+    document.getElementById('modo').value=D.modo;
   document.getElementById('caplbl').textContent=D.modo==='nuevo'?'COBRADO NUEVO':'ACUMULADO TOTAL';
-  otiPane();
+  otiPane();pintaAvance();
   const d=delta(D.week), p=promedio();
   document.getElementById('pal-sem').textContent=d==null?'—':d;
   document.getElementById('pal-prom').textContent=p?p.v.toFixed(1):'—';
   pintar('pal',estado(p?p.v:null,META,'VAMOS GANANDO','VAMOS PERDIENDO'));
   pintar('sem',estado(d,META,'GANAMOS ESTA SEMANA','PERDIMOS ESTA SEMANA'));
-  chartOti();chartPal();matriz();comp();convo();
+  pintaLineas();pintaAvance();chartOti();chartPal();matriz();comp();convo();
 }
 
 /* ---------- eventos ---------- */
 document.addEventListener('input',e=>{
   const t=e.target;
-  if(t.id==='cobrado'){D.cobrado[D.week]=t.value===''?'':Number(t.value);save();chartOti();otiPane();return;}
+  if(t.dataset.lc!=null){const i=t.dataset.lc;D.cob[i]=D.cob[i]||{};
+    D.cob[i][D.week]=t.value===''?'':Number(t.value);save();chartOti();otiPane();pintaAvance();return;}
+  if(t.dataset.ln!=null){D.lineas[t.dataset.ln].n=t.value;save();pintaAvance();return;}
   if(t.id==='resp'){D.resp=t.value;save();return;}
   if(t.dataset.ci!=null){
     const c=D.clients[t.dataset.ci];
     if(t.dataset.f==='name'){c.name=t.value;save();return;}
-    c.st[t.dataset.w]=t.value===''?'':Math.max(0,Math.min(6,Number(t.value)));save();
-    if(Number(t.value)===6){const r=document.getElementById('recuerda');
-      r.innerHTML='<strong>'+(c.name||'Este cliente')+'</strong> llegó a cerrado y cobrado. Captura el monto arriba, en el OTI, cuando el dinero caiga en la cuenta.';
-      r.style.display='block';clearTimeout(window._rt);
-      window._rt=setTimeout(()=>{r.style.display='none';},12000);}
+    if(t.dataset.f==='nota'){c.nota=t.value;save();return;}
+    c.st[t.dataset.w]=t.value===''?'':Math.max(0,Math.min(8,Number(t.value)));save();
+    const nv=Number(t.value), nb=c.name||'Este cliente', r=document.getElementById('recuerda');
+    if(nv===6||nv===7||nv===8){
+      const cfg=nv===6?['#2FBF71','#EAF6EF','#1E7F4A',nb+' llegó a <strong>cerrado y cobrado</strong>. Captura el monto arriba, en el OTI, cuando el dinero caiga en la cuenta.']
+        :nv===7?['#E8B54A','#FEF8EC','#9A7420',nb+' pasó a <strong>en riesgo</strong>. Escribe abajo de su nombre qué lo enfrió y comprométanse a un movimiento el lunes.']
+        :['#E5533D','#FDF1EF','#A33325',nb+' quedó como <strong>soldado caído</strong>. Anota abajo de su nombre por qué se perdió — eso construye el aprendizaje del equipo.'];
+      r.style.borderLeftColor=cfg[0];r.style.background=cfg[1];r.style.color=cfg[2];
+      r.innerHTML=cfg[3];r.style.display='block';clearTimeout(window._rt);
+      window._rt=setTimeout(()=>{r.style.display='none';},14000);}
     const ci=t.dataset.ci,w=t.dataset.w,pos=t.selectionStart;
     render();
     const re=document.querySelector(`input.cell[data-ci="${ci}"][data-w="${w}"]`);
@@ -736,6 +814,11 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('click',e=>{
   const t=e.target;
+  if(t.id==='addlin'){D.lineas.push({n:''});D.cob[D.lineas.length-1]={};save();render();return;}
+  if(t.dataset.lnx!=null){const i=Number(t.dataset.lnx);
+    if(confirm('¿Borrar la línea "'+(D.lineas[i].n||'sin nombre')+'" y todo lo capturado en ella?')){
+      D.lineas.splice(i,1);const nc={};D.lineas.forEach((_,k)=>{nc[k]=D.cob[k>=i?k+1:k]||{};});
+      D.cob=nc;save();render();}return;}
   if(t.id==='addcli'){D.clients.push({name:'',st:{}});save();render();}
   if(t.id==='addwk'){W++;D.semanas=W;save();llenarSel();render();}
   if(t.id==='editar'){EDITAR=!EDITAR;t.textContent=EDITAR?'LISTO':'EDITAR LISTA';
